@@ -1,0 +1,10 @@
+{
+  "name": "personal-skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Personal Claude Code skill collection. Install with `npm run link`.",
+  "scripts": {
+    "link": "scripts/link-skills.sh",
+    "list": "scripts/list-skills.sh"
+  }
+}
