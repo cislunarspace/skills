@@ -4,7 +4,7 @@
 
 我的日常 Claude Code skills —— 小、可组合、基于实际工程习惯，不是 vibe coding。
 
-> 当前包含 2 个 skill，持续迭代中。
+> 当前包含 3 个 skill，持续迭代中。
 
 ## 快速开始
 
@@ -14,7 +14,7 @@ npx skills@latest add cislunarspace/skills
 
 CLI 会读取 `.claude-plugin/plugin.json`，把所有 skill 软链到 `~/.claude/skills/`。
 
-安装后在 agent 中即可直接使用 `/sync-writing-standards`、`/git-commit` 等命令。
+安装后在 agent 中即可直接使用 `/dispatch`、`/sync-writing-standards`、`/git-commit` 等命令。
 
 ## 为什么做这些 Skill
 
@@ -30,8 +30,15 @@ CLI 会读取 `.claude-plugin/plugin.json`，把所有 skill 软链到 `~/.claud
 
 **解法**：[`/git-commit`](./skills/git-commit/SKILL.md) —— 派出一个 agent 分析会话文件和 diff，返回结构化的 commit 建议（文件列表、改动摘要、拟定的 message）；主线程只负责确认和执行。session 级别的精准控制，分析与交互分离。
 
+### #3：计划写完就丢，执行靠人肉
+
+**问题**：写完计划或 handoff 文件后，得手动拆任务、逐个分配给 agent、盯进度、收结果。计划和执行之间全是手工活。
+
+**解法**：[`/dispatch`](./skills/dispatch/SKILL.md) —— 读取计划或 GitHub issue，按依赖关系分层，逐层扇出给 Agent 子代理并行执行。失败自动汇报，层间自动推进，最终跑测试验证。
+
 ## 参考
 
+- **[dispatch](./skills/dispatch/SKILL.md)** — 读取计划或 issue，按依赖分层，逐层扇出给 Agent 子代理并行执行；失败汇报、层间推进、最终验证。触发词：`dispatch`、`run agents`、`swarm`。
 - **[git-commit](./skills/git-commit/SKILL.md)** — 派出 agent 分析会话文件和 diff，返回结构化 commit 建议；主线程确认后执行提交。触发词：`git commit`、`commit`、`提交`。
 - **[sync-writing-standards](./skills/sync-writing-standards/SKILL.md)** — 将预定义的交流语言、写作要求、编码准则注入当前仓库的 `CLAUDE.md`，确保所有 session 保持一致的风格和规范。触发词：`sync-writing-standards`。
 
