@@ -12,9 +12,9 @@ category: github
 
 ### 1. 分析并起草
 
-派出一个 agent 做分析工作，返回结构化的 commit 建议。
+用 `Agent()` 派出子代理做分析。**主线程不做分析，等子代理返回。**
 
-agent 的任务：
+子代理的 prompt：
 
 1. 运行 `node <skill-base>/scripts/get-session-files.js "$PWD"`（`<skill-base>` 用已加载 skill 显示的绝对路径）获取 `SESSION_FILES`。若返回 `NO_LOG` / `NO_SESSION_ID`，回退到从对话推断（扫描 `Write`、`Edit`、`MultiEdit`、`NotebookEdit` 调用提取路径）。若返回 `EMPTY`，将 `proposed_message` 设为空。
 2. 运行 `git diff --name-only`，收集不在 `SESSION_FILES` 中的脏文件。
@@ -23,7 +23,7 @@ agent 的任务：
 5. 写出改动摘要。
 6. 从对话上下文中识别关联的 issue 编号（用户提到的 `#N`、issue 链接、issue 标题等）。
 
-agent 返回结构：
+子代理返回结构：
 
 | 字段 | 含义 |
 |------|------|
@@ -34,9 +34,11 @@ agent 返回结构：
 | `edge_cases` | 边界情况说明，可为空 |
 | `related_issues` | 从对话中识别的 issue 编号列表，可为空 |
 
+**完成条件**：主线程收到子代理返回的结构化结果。
+
 ### 2. 确认并提交
 
-1. 展示 agent 的分析结果。
+1. 展示子代理的分析结果。
 2. 若有 `out_of_session_files`，问用户是否包含。
 3. 展示拟定的 message，等用户明确同意 —— 绝不自行提交。
 4. 暂存并提交：
@@ -57,7 +59,7 @@ git log --oneline -3
 
 ### 4. 关闭相关 issues
 
-使用步骤 1 agent 返回的 `related_issues`。
+使用步骤 1 子代理返回的 `related_issues`。
 
 若列表为空，跳过此步骤。
 
