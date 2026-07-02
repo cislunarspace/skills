@@ -21,6 +21,7 @@ agent 的任务：
 3. 运行 `git diff --stat` 和 `git diff` 查看 `SESSION_FILES` 的改动。
 4. 起草 commit message，遵循项目格式（见 `common/git-workflow.md`）。若改动包含独立的关注点，为每个关注点起草独立的 message。
 5. 写出改动摘要。
+6. 从对话上下文中识别关联的 issue 编号（用户提到的 `#N`、issue 链接、issue 标题等）。
 
 agent 返回结构：
 
@@ -31,6 +32,7 @@ agent 返回结构：
 | `proposed_message` | 拟定的 commit message，可为空 |
 | `out_of_session_files` | 不在会话范围内的脏文件，可为空 |
 | `edge_cases` | 边界情况说明，可为空 |
+| `related_issues` | 从对话中识别的 issue 编号列表，可为空 |
 
 ### 2. 确认并提交
 
@@ -53,6 +55,26 @@ git log --oneline -3
 
 确认 `SESSION_FILES` 已干净。忽略其他脏文件 —— 它们在步骤 2 中已经处理（或被排除）。
 
+### 4. 关闭相关 issues
+
+使用步骤 1 agent 返回的 `related_issues`。
+
+若列表为空，跳过此步骤。
+
+对每个编号，运行 `gh issue view <N>` 检查状态。跳过不存在或已关闭的。
+
+若仍有打开的 issue：
+
+1. 展示 issue 列表（编号、标题、状态）。
+2. 询问用户确认哪些要关闭 —— 不自行关闭。
+3. 用户确认后，逐个关闭：
+
+```bash
+gh issue close <N> --comment "已在 <commit-sha> 中完成"
+```
+
+若没有关联 issue，跳过此步骤。
+
 ## 边界情况
 
 | 情况 | 处理方式 |
@@ -61,3 +83,5 @@ git log --oneline -3
 | 会话文件存在合并冲突 | 不提交，先解决冲突 |
 | 大 diff（超过 20 个文件） | 确认：一次提交还是拆分？ |
 | 日志中出现新的未跟踪文件 | 自动包含进来 |
+| issue 编号在 GitHub 上不存在 | 静默跳过，不报错 |
+| 所有关联 issue 已关闭 | 跳过步骤 4 |
