@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Return files modified by edit tools in the current Claude Code session.
+ * Return files modified by edit tools in the current agent session.
  *
  * Primary source: Claude Code transcript JSONL for CLAUDE_CODE_SESSION_ID.
+ * Secondary source: Kimi Code wire JSONL under ~/.kimi-code/sessions.
  * Fallback source: legacy .claude/session-files.log from cwd or git root.
  *
  * Usage:
@@ -24,6 +25,8 @@ const EDIT_TOOL_NAMES = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 const LEGACY_STALE_SECONDS = 86400;
 const TRANSCRIPT_LOOKBACK_MS = 14 * 24 * 60 * 60 * 1000;
 const MAX_DISCOVERY_FILE_BYTES = 50 * 1024 * 1024;
+const KIMI_WIRE_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+const KIMI_WIRE_CWD_PROBE_LINES = 200;
 
 function gitRoot(startPath) {
   try {
@@ -236,34 +239,140 @@ function collectLegacyLogFiles(logPath, sessionId, root) {
   return files;
 }
 
-function main() {
-  const sessionId = process.env.CLAUDE_CODE_SESSION_ID || '';
-  if (!sessionId) {
-    console.log('NO_SESSION_ID');
-    return;
+// --- Kimi Code support -------------------------------------------------------
+
+function kimiCodeRoot() {
+  return path.join(os.homedir(), '.kimi-code');
+}
+
+function listKimiWireFiles() {
+  const sessionsDir = path.join(kimiCodeRoot(), 'sessions');
+  if (!fs.existsSync(sessionsDir)) return [];
+
+  const wires = [];
+  for (const projectEntry of fs.readdirSync(sessionsDir, { withFileTypes: true })) {
+    if (!projectEntry.isDirectory()) continue;
+    const projectDir = path.join(sessionsDir, projectEntry.name);
+
+    for (const sessionEntry of fs.readdirSync(projectDir, { withFileTypes: true })) {
+      if (!sessionEntry.isDirectory()) continue;
+      const sessionDir = path.join(projectDir, sessionEntry.name);
+      const mainWire = path.join(sessionDir, 'agents', 'main', 'wire.jsonl');
+      if (fs.existsSync(mainWire)) wires.push(mainWire);
+    }
+  }
+  return wires;
+}
+
+function wireReferencesRepo(wirePath, root) {
+  try {
+    const fd = fs.openSync(wirePath, 'r');
+    try {
+      const bufferSize = 256 * 1024;
+      const buffer = Buffer.alloc(bufferSize);
+      const bytesRead = fs.readSync(fd, buffer, 0, bufferSize, 0);
+      const head = buffer.toString('utf8', 0, bytesRead);
+      const lines = head.split('\n').slice(0, KIMI_WIRE_CWD_PROBE_LINES);
+
+      for (const line of lines) {
+        if (!line.includes('"tool.call"')) continue;
+        let entry;
+        try {
+          entry = JSON.parse(line);
+        } catch {
+          continue;
+        }
+        const cwd = entry?.event?.display?.cwd || entry?.event?.cwd || '';
+        if (!cwd) continue;
+        const normalizedCwd = path.normalize(cwd);
+        if (isPathInside(normalizedCwd, root) || isPathInside(root, normalizedCwd)) {
+          return true;
+        }
+      }
+      return false;
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch {
+    return false;
+  }
+}
+
+function findKimiWire(root) {
+  const cutoff = Date.now() - KIMI_WIRE_LOOKBACK_MS;
+  const candidates = listKimiWireFiles()
+    .map((wirePath) => ({ wirePath, stat: fs.statSync(wirePath) }))
+    .filter(({ stat }) => stat.mtimeMs >= cutoff)
+    .filter(({ wirePath }) => wireReferencesRepo(wirePath, root))
+    .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
+
+  return candidates[0]?.wirePath || null;
+}
+
+function collectKimiFiles(wirePath, root) {
+  const files = new Set();
+  const lines = fs.readFileSync(wirePath, 'utf8').split('\n').filter(Boolean);
+
+  for (const line of lines) {
+    let entry;
+    try {
+      entry = JSON.parse(line);
+    } catch {
+      continue;
+    }
+
+    if (entry?.type !== 'context.append_loop_event') continue;
+    const event = entry?.event;
+    if (event?.type !== 'tool.call') continue;
+
+    const basePath = event?.display?.cwd || event?.cwd || root;
+    addToolInputFiles(files, event.name || '', event.args || {}, root, basePath);
   }
 
+  return files;
+}
+
+// --- Main --------------------------------------------------------------------
+
+function main() {
   const root = repoRoot();
   const files = new Set();
   let foundSource = false;
 
-  for (const transcriptPath of transcriptCandidates(sessionId, root)) {
-    foundSource = true;
-    for (const filePath of collectTranscriptFiles(transcriptPath, root, sessionId)) {
-      files.add(filePath);
+  // Claude Code path
+  const claudeSessionId = process.env.CLAUDE_CODE_SESSION_ID || '';
+  if (claudeSessionId) {
+    for (const transcriptPath of transcriptCandidates(claudeSessionId, root)) {
+      foundSource = true;
+      for (const filePath of collectTranscriptFiles(transcriptPath, root, claudeSessionId)) {
+        files.add(filePath);
+      }
+    }
+
+    if (files.size === 0) {
+      for (const logPath of [...new Set(legacyLogCandidates(root))]) {
+        if (!fs.existsSync(logPath)) continue;
+        foundSource = true;
+        for (const filePath of collectLegacyLogFiles(logPath, claudeSessionId, root)) {
+          files.add(filePath);
+        }
+      }
     }
   }
 
+  // Kimi Code path
   if (files.size === 0) {
-    for (const logPath of [...new Set(legacyLogCandidates(root))]) {
-      if (!fs.existsSync(logPath)) continue;
+    const kimiWire = findKimiWire(root);
+    if (kimiWire) {
       foundSource = true;
-      for (const filePath of collectLegacyLogFiles(logPath, sessionId, root)) files.add(filePath);
+      for (const filePath of collectKimiFiles(kimiWire, root)) {
+        files.add(filePath);
+      }
     }
   }
 
   if (!foundSource) {
-    console.log('NO_LOG');
+    console.log(claudeSessionId ? 'NO_LOG' : 'NO_SESSION_ID');
     return;
   }
 

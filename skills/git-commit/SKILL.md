@@ -1,12 +1,12 @@
 ---
 name: git-commit
-description: 暂存并提交当前 Claude Code 会话中修改的文件。当用户说"git commit"、"commit"、"提交"或要求提交改动时使用。
+description: 暂存并提交当前会话中修改的文件。当用户说"git commit"、"commit"、"提交"或要求提交改动时使用。
 category: github
 ---
 
 # Git Commit
 
-会话范围：只提交本次会话改动的文件。`scripts/get-session-files.js` 是判断范围的依据。
+会话范围：只提交本次会话改动的文件。`scripts/get-session-files.js` 是判断范围的依据（支持 Claude Code 与 Kimi Code 会话追踪）。
 
 ## 工作流程
 
