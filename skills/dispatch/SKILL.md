@@ -1,38 +1,30 @@
 ---
 name: dispatch
-description: 将计划或 issue 扇出给 Agent 子代理并行执行。当用户说 'dispatch'、'run agents'、'swarm'，或刚写完计划/handoff 文件时使用。
+description: 扇出执行：将计划或 issue 按依赖分层，逐层发给 Agent 子代理并行执行。当用户说 'dispatch'、'run agents'、'swarm'，或刚写完计划/handoff 文件时使用。
 argument-hint: "计划文件路径、issue 编号（如 #N），或 'latest'"
 ---
 
 # Dispatch
 
-读取计划，按依赖关系分层，逐层扇出给 Agent 子代理并行执行。
+读取计划，按依赖分层，逐层扇出。
 
 ## 步骤
 
-### 1. 识别来源并提取任务
+### 1. 识别来源，提取任务
 
-参数决定来源：
+参数决定来源：文件路径 → 读文件；`#N` → `gh issue view`；`latest` 或空 → 找当前会话最近的计划/handoff 文件（`*.plan.md`、`PLAN.md`、`handoff-*.md`）。
 
-- **文件路径** → 读文件
-- **issue 编号**（如 `#N`）→ `gh issue view` 获取
-- **`latest`** 或空 → 找当前会话最近写入的计划/handoff 文件（`*.plan.md`、`PLAN.md`、`handoff-*.md`）
-
-读来源文件，拆成独立任务。每个任务需要标题、完整 prompt（文件路径、改什么、验收标准）、依赖关系。
-
-来源不同，拆法不同：
+读来源，拆成任务。每个任务需要标题、prompt（文件路径、改什么、验收标准）、依赖关系。
 
 | 来源 | 拆法 |
 |------|------|
 | GitHub issue | 每个 issue 一个任务，`gh issue view <N> --json body` 取正文，blocked-by 变依赖 |
 | 计划文件 | `##` / `###` 标题是任务，下方要点是 prompt |
-| Handoff 文件 | 看 issue 引用（`#N`）、依赖图、"下一步建议" |
-
-无显式依赖的任务视为独立。
+| Handoff 文件 | 看 issue 引用、依赖图、"下一步建议" |
 
 ### 2. 编排层级
 
-按依赖关系分层——Level 0 无依赖可并行，Level N 依赖 Level N-1。
+按依赖分层——Level 0 无依赖可并行，Level N 依赖 Level N-1。
 
 展示调度计划，等用户确认：
 
@@ -43,18 +35,11 @@ Level 1（等待 #N1）：#N3
 Level 2（等待全部）：验证
 ```
 
-### 3. 扇出执行
+### 3. 扇出
 
-逐层用 `AgentSwarm` 发射：
+逐层用 `AgentSwarm`（`subagent_type: "coder"`，不设 `run_in_background`）发射。每个子代理只拿自己的切片，不给完整计划。
 
-- `subagent_type`: `"coder"`
-- `prompt_template`: 任务的完整 prompt（标题、文件路径、改什么、验收标准、项目 AGENTS.md 路径；有依赖时注明前置任务输出位置）
-- `items`: 任务标识符
-- 不设 `run_in_background` — 等结果
-
-每个子代理只拿自己的切片，不给完整计划。
-
-收集结果，逐个检查：成功？有错误？测试通过？失败的任务报告用户——重试、跳过、还是中止？层间汇报进度。
+收集结果逐个检查：成功？有错误？测试通过？失败的任务报告用户——重试、跳过、还是中止？层间汇报进度。
 
 ### 4. 验证
 
