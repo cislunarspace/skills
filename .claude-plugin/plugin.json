@@ -1,6 +1,7 @@
 {
   "name": "personal-skills",
   "skills": [
+    "./skills/dispatch",
     "./skills/sync-writing-standards",
     "./skills/git-commit"
   ]
