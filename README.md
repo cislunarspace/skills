@@ -6,7 +6,7 @@
 
 > 当前包含 2 个 skill，持续迭代中。
 
-## Quickstart（30 秒装好）
+## 快速开始
 
 ```bash
 npx skills@latest add cislunarspace/skills
@@ -28,19 +28,16 @@ CLI 会读取 `.claude-plugin/plugin.json`，把所有 skill 软链到 `~/.claud
 
 **问题**：让 agent 跑 `git commit`，它经常把不相关的文件一起提交，或者 commit message 写得像流水账。
 
-**解法**：[`/git-commit`](./skills/git-commit/SKILL.md) —— 只提交当前 session 修改过的文件，自动检测是否混入了无关变更，生成规范的 commit message，并在提交前确认。session 级别的精准控制。
+**解法**：[`/git-commit`](./skills/git-commit/SKILL.md) —— 派出一个 agent 分析会话文件和 diff，返回结构化的 commit 建议（文件列表、改动摘要、拟定的 message）；主线程只负责确认和执行。session 级别的精准控制，分析与交互分离。
 
-## Reference
+## 参考
 
-按调用方式分两类：**User-invoked** 只能你手动调用；**Model-invoked** 你和 agent 都能触发。
+- **[git-commit](./skills/git-commit/SKILL.md)** — 派出 agent 分析会话文件和 diff，返回结构化 commit 建议；主线程确认后执行提交。触发词：`git commit`、`commit`、`提交`。
+- **[sync-writing-standards](./skills/sync-writing-standards/SKILL.md)** — 将预定义的交流语言、写作要求、编码准则注入当前仓库的 `CLAUDE.md`，确保所有 session 保持一致的风格和规范。触发词：`sync-writing-standards`。
 
-### User-invoked
+## 推荐
 
-- **[git-commit](./skills/git-commit/SKILL.md)** — 只提交当前 session 涉及的文件。自动校验范围、生成规范 commit message、提交前确认。触发词：`git commit`、`commit`、`提交`。
-
-### Model-invoked
-
-- **[sync-writing-standards](./skills/sync-writing-standards/SKILL.md)** — 将预定义的交流语言、写作要求、编码准则注入当前仓库的 `CLAUDE.md`，确保所有 session 保持一致的风格和规范。
+- **[mattpocock/skills](https://github.com/mattpocock/skills)** — 软件工程基本功合集：对齐需求（grilling）、共享语言、TDD、调试、代码架构、PRD、issue 分诊等。强调小、可组合、基于工程经验，不是 vibe coding。
 
 ## 目录结构
 
