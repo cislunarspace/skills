@@ -10,53 +10,41 @@ category: github
 
 ## 工作流程
 
-### 1. 获取会话文件
+### 1. 分析并起草
 
-在仓库根目录运行 `node <skill-base>/scripts/get-session-files.js "$PWD"`，`<skill-base>` 用已加载 skill 显示的绝对路径。
+派出一个 agent 做分析工作，返回结构化的 commit 建议。
 
-- **JSON 数组** → 作为 `SESSION_FILES`。
-- **NO_LOG / NO_SESSION_ID** → 回退到 1b。
-- **EMPTY** → 询问用户要提交什么；不要猜测。
+agent 的任务：
 
-#### 1b. 回退：从对话推断
+1. 运行 `node <skill-base>/scripts/get-session-files.js "$PWD"`（`<skill-base>` 用已加载 skill 显示的绝对路径）获取 `SESSION_FILES`。若返回 `NO_LOG` / `NO_SESSION_ID`，回退到从对话推断（扫描 `Write`、`Edit`、`MultiEdit`、`NotebookEdit` 调用提取路径）。若返回 `EMPTY`，将 `proposed_message` 设为空。
+2. 运行 `git diff --name-only`，收集不在 `SESSION_FILES` 中的脏文件。
+3. 运行 `git diff --stat` 和 `git diff` 查看 `SESSION_FILES` 的改动。
+4. 起草 commit message，遵循项目格式（见 `common/git-workflow.md`）。若改动包含独立的关注点，为每个关注点起草独立的 message。
+5. 写出改动摘要。
 
-1. 扫描对话中的 `Write`、`Edit`、`MultiEdit`、`NotebookEdit` 工具调用，提取路径。
-2. 提示："会话文件追踪未配置，文件列表可能不完整。"
-3. 用推断的列表作为 `SESSION_FILES`。
+agent 返回结构：
 
-### 2. 检查会话外的改动
+| 字段 | 含义 |
+|------|------|
+| `session_files` | 会话文件列表 |
+| `summary` | 改动摘要 |
+| `proposed_message` | 拟定的 commit message，可为空 |
+| `out_of_session_files` | 不在会话范围内的脏文件，可为空 |
+| `edge_cases` | 边界情况说明，可为空 |
 
-```
-git diff --name-only
-```
+### 2. 确认并提交
 
-若有脏文件不在 `SESSION_FILES` 中 → 列出它们，问"要把这些也包含进来吗？"。全部干净 → 直接继续。
-
-### 3. 查看 diff
-
-```
-git diff --stat -- <SESSION_FILES>
-git diff -- <SESSION_FILES>
-```
-
-读到足以了解改了什么、是否需要配套测试即可。
-
-### 4. 起草 commit message
-
-遵循项目的 commit 格式（见 `common/git-workflow.md`）。正文写类型、范围、为什么改而不是改了什么。若会话文件包含独立的关注点（重构 + 新功能 + 修复），分开提交；原子性的改动放在一起。
-
-### 5. 提交前确认
-
-展示文件列表和拟定的 message，等用户明确同意 —— 绝不自行提交。
-
-### 6. 暂存并提交
+1. 展示 agent 的分析结果。
+2. 若有 `out_of_session_files`，问用户是否包含。
+3. 展示拟定的 message，等用户明确同意 —— 绝不自行提交。
+4. 暂存并提交：
 
 ```bash
 git add <file1> <file2> ...   # 只用明确路径 —— 绝不用 git add -A / git add .
 git commit -m "type: description"
 ```
 
-### 7. 验证
+### 3. 验证
 
 ```bash
 git status -- <SESSION_FILES>
