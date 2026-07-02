@@ -70,8 +70,10 @@ git log --oneline -3
 3. 用户确认后，逐个关闭：
 
 ```bash
-gh issue close <N> --comment "已在 <commit-sha> 中完成"
+gh issue close <N> --comment "已在 [<commit-sha>](<commit-url>) 中完成"
 ```
+
+其中 `<commit-url>` 从 `git remote get-url origin` 推导（如 `https://github.com/owner/repo/commit/<sha>`）。
 
 若没有关联 issue，跳过此步骤。
 
