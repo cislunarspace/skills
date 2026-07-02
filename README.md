@@ -7,7 +7,7 @@
 用 [skills](https://github.com/vercel-labs/skills) CLI 装到 Claude Code：
 
 ```bash
-npx skills add ouyangjiahong/skills
+npx skills add cislunarspace/skills
 ```
 
 CLI 自动读 `.claude-plugin/plugin.json`，把仓库内所有 skill 软链到 `~/.claude/skills/`。
@@ -41,4 +41,4 @@ npm run list    # 列出仓库内所有 skill
 
 1. 在 `skills/<name>/` 下创建 `SKILL.md`（含 frontmatter：`name`、`description`）
 2. 在 `.claude-plugin/plugin.json` 的 `skills` 数组里加一行（必须以 `./` 开头）
-3. `npx skills add ouyangjiahong/skills`
+3. `npx skills add cislunarspace/skills`

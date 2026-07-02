@@ -1,4 +1,5 @@
 ---
+name: sync-writing-standards
 description: 将预定义的交流语言、写作要求、编码准则注入当前仓库的 CLAUDE.md。
 ---
 

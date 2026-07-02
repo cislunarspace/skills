@@ -5,6 +5,7 @@
   "description": "Personal Claude Code skill collection. Install with `npm run link`.",
   "scripts": {
     "link": "scripts/link-skills.sh",
-    "list": "scripts/list-skills.sh"
+    "list": "scripts/list-skills.sh",
+    "check": "scripts/check-skills.sh"
   }
 }
