@@ -77,8 +77,6 @@ gh issue close <N> --comment "已在 [<commit-sha>](<commit-url>) 中完成"
 
 其中 `<commit-url>` 从 `git remote get-url origin` 推导（如 `https://github.com/owner/repo/commit/<sha>`）。
 
-若没有关联 issue，跳过此步骤。
-
 ## 边界情况
 
 | 情况 | 处理方式 |
