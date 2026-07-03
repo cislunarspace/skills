@@ -3,7 +3,7 @@
  * 返回当前 agent 会话中被编辑工具修改过的文件。
  *
  * 主源：CLSAUDE_CODE_SESSION_ID 对应的 Claude Code 转录 JSONL。
- * 次源：~/.kimi-code/sessions 下的 Kimi Code wire JSONL。
+ * 次源：~/.kimi-code/sessions 下的 Kimi Code wire JSONL（主线程 + 子代理 agent-N）。
  * 回退源：当前工作目录或 git 根目录下的旧版 .claude/session-files.log。
  *
  * 用法：
@@ -36,7 +36,7 @@ const MAX_DISCOVERY_FILE_BYTES = 50 * 1024 * 1024;
 // Kimi Code wire 文件只看最近 24 小时，减少误匹配其他会话。
 const KIMI_WIRE_LOOKBACK_MS = 24 * 60 * 60 * 1000;
 
-// 探测 wire 文件时只读前 200 行来找 cwd，避免读取整个文件。
+// 探测 wire 文件时只读前 200 行来找归属信号，避免读取整个文件。
 const KIMI_WIRE_CWD_PROBE_LINES = 200;
 
 // 用 git 找仓库根目录；不在 git 仓库里时退回到传入路径本身。
@@ -280,7 +280,8 @@ function kimiCodeRoot() {
   return path.join(os.homedir(), '.kimi-code');
 }
 
-// 遍历 ~/.kimi-code/sessions/<project>/<session>/agents/main/wire.jsonl。
+// 扫描 ~/.kimi-code/sessions 下所有 session 的所有 agent wire。
+// 主线程（agents/main）与子代理（agents/agent-N）都纳入候选。
 function listKimiWireFiles() {
   const sessionsDir = path.join(kimiCodeRoot(), 'sessions');
   if (!fs.existsSync(sessionsDir)) return [];
@@ -292,15 +293,22 @@ function listKimiWireFiles() {
 
     for (const sessionEntry of fs.readdirSync(projectDir, { withFileTypes: true })) {
       if (!sessionEntry.isDirectory()) continue;
-      const sessionDir = path.join(projectDir, sessionEntry.name);
-      const mainWire = path.join(sessionDir, 'agents', 'main', 'wire.jsonl');
-      if (fs.existsSync(mainWire)) wires.push(mainWire);
+      const agentsDir = path.join(projectDir, sessionEntry.name, 'agents');
+      if (!fs.existsSync(agentsDir)) continue;
+
+      for (const agentEntry of fs.readdirSync(agentsDir, { withFileTypes: true })) {
+        if (!agentEntry.isDirectory()) continue;
+        const wirePath = path.join(agentsDir, agentEntry.name, 'wire.jsonl');
+        if (fs.existsSync(wirePath)) wires.push(wirePath);
+      }
     }
   }
   return wires;
 }
 
-// 读取 wire 文件开头，看其中 tool.call 的 cwd 是否和当前仓库有关联。
+// 读 wire 文件开头，看 tool.call 的 cwd 或 args.path 是否指向当前仓库。
+// Bash 事件带 display.cwd，主信号；
+// Edit/Write 等子代理事件常给绝对 args.path，作为次级信号。
 function wireReferencesRepo(wirePath, root) {
   try {
     const fd = fs.openSync(wirePath, 'r');
@@ -319,11 +327,26 @@ function wireReferencesRepo(wirePath, root) {
         } catch {
           continue;
         }
-        const cwd = entry?.event?.display?.cwd || entry?.event?.cwd || '';
-        if (!cwd) continue;
-        const normalizedCwd = path.normalize(cwd);
-        // cwd 与仓库互相包含，即认为相关。
-        if (isPathInside(normalizedCwd, root) || isPathInside(root, normalizedCwd)) {
+        const event = entry?.event;
+        if (!event) continue;
+
+        const cwd = event.display?.cwd || event.cwd || '';
+        if (cwd) {
+          const normalizedCwd = path.normalize(cwd);
+          if (isPathInside(normalizedCwd, root) || isPathInside(root, normalizedCwd)) {
+            return true;
+          }
+          continue;
+        }
+
+        // 没有 cwd 时，回退到 args.path（绝对路径）做归属判断。
+        const args = event.args;
+        const candidate = args && typeof args.path === 'string' ? args.path : '';
+        if (
+          candidate &&
+          path.isAbsolute(candidate) &&
+          isPathInside(path.normalize(candidate), root)
+        ) {
           return true;
         }
       }
@@ -336,8 +359,9 @@ function wireReferencesRepo(wirePath, root) {
   }
 }
 
-// 找最近修改过、且与当前仓库相关的 Kimi wire 文件。
-function findKimiWire(root) {
+// 找最近修改过、归属到当前仓库的 Kimi wire，并返回同 session 的所有 agent wire。
+// 主线程和子代理的 wire 视为同一工作单元——它们一定在同一仓库下运作。
+function findKimiWires(root) {
   const cutoff = Date.now() - KIMI_WIRE_LOOKBACK_MS;
   const candidates = listKimiWireFiles()
     .map((wirePath) => ({ wirePath, stat: fs.statSync(wirePath) }))
@@ -345,28 +369,43 @@ function findKimiWire(root) {
     .filter(({ wirePath }) => wireReferencesRepo(wirePath, root))
     .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
 
-  return candidates[0]?.wirePath || null;
+  if (candidates.length === 0) return [];
+
+  // 从最新一条往上溯到 agents/ 目录，把同 session 的 wire 全部收进来。
+  const agentsDir = path.dirname(path.dirname(candidates[0].wirePath));
+  if (!fs.existsSync(agentsDir)) return [candidates[0].wirePath];
+
+  const sameSession = [];
+  for (const agentEntry of fs.readdirSync(agentsDir, { withFileTypes: true })) {
+    if (!agentEntry.isDirectory()) continue;
+    const wirePath = path.join(agentsDir, agentEntry.name, 'wire.jsonl');
+    if (fs.existsSync(wirePath)) sameSession.push(wirePath);
+  }
+  return sameSession.length > 0 ? sameSession : [candidates[0].wirePath];
 }
 
-// 从 Kimi wire 里收集 tool.call 中编辑工具修改过的文件。
-function collectKimiFiles(wirePath, root) {
+// 从一个或多个 Kimi wire 里收集 tool.call 中编辑工具修改过的文件。
+function collectKimiFiles(wirePaths, root) {
   const files = new Set();
-  const lines = fs.readFileSync(wirePath, 'utf8').split('\n').filter(Boolean);
 
-  for (const line of lines) {
-    let entry;
-    try {
-      entry = JSON.parse(line);
-    } catch {
-      continue;
+  for (const wirePath of wirePaths) {
+    const lines = fs.readFileSync(wirePath, 'utf8').split('\n').filter(Boolean);
+
+    for (const line of lines) {
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch {
+        continue;
+      }
+
+      if (entry?.type !== 'context.append_loop_event') continue;
+      const event = entry?.event;
+      if (event?.type !== 'tool.call') continue;
+
+      const basePath = event?.display?.cwd || event?.cwd || root;
+      addToolInputFiles(files, event.name || '', event.args || {}, root, basePath);
     }
-
-    if (entry?.type !== 'context.append_loop_event') continue;
-    const event = entry?.event;
-    if (event?.type !== 'tool.call') continue;
-
-    const basePath = event?.display?.cwd || event?.cwd || root;
-    addToolInputFiles(files, event.name || '', event.args || {}, root, basePath);
   }
 
   return files;
@@ -403,10 +442,10 @@ function main() {
 
   // Kimi Code 路径：只有 Claude Code 没找到文件时才走这里。
   if (files.size === 0) {
-    const kimiWire = findKimiWire(root);
-    if (kimiWire) {
+    const kimiWires = findKimiWires(root);
+    if (kimiWires.length > 0) {
       foundSource = true;
-      for (const filePath of collectKimiFiles(kimiWire, root)) {
+      for (const filePath of collectKimiFiles(kimiWires, root)) {
         files.add(filePath);
       }
     }
