@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 Skills 集中在 `skills/` 目录。每个 skill 一个目录，目录名即 skill 名；内部固定有 `SKILL.md`，可选 `references/` 放引用材料。
 
