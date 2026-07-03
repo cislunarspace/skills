@@ -1,6 +1,6 @@
 ---
 name: dispatch
-description: 扇出执行：将计划或 issue 按依赖分层，逐层发给 Agent 子代理并行执行。当用户说 'dispatch'、'run agents'、'swarm'，或刚写完计划/handoff 文件时使用。
+description: 扇出执行：将计划或 issue 按依赖分层，逐层发给 Agent 子代理并行执行。
 argument-hint: "计划文件路径、issue 编号（如 #N），或 'latest'"
 ---
 
