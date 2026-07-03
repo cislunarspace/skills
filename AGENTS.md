@@ -1,24 +1,4 @@
-# CLAUDE.md
-
-Skills 集中在 `skills/` 目录。每个 skill 一个目录，目录名即 skill 名；内部固定有 `SKILL.md`，可选 `references/` 放引用材料。
-
-安装：跑 `npx skills add cislunarspace/skills`，把 skill 软链到 `~/.claude/skills/`。链接是软链，`git pull` 自动同步。
-
-新增 skill：在 `skills/<name>/` 下放 `SKILL.md`，在 `.claude-plugin/plugin.json` 的 `skills` 数组里加一行，重跑 `npx skills add cislunarspace/skills`。
-
-## Agent skills
-
-### Issue tracker
-
-GitHub Issues, with external PRs also treated as a triage surface. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: read `CONTEXT.md` at the repo root and `docs/adr/` for architectural decisions. See `docs/agents/domain.md`。
+`````
 
 ## 交流语言
 
@@ -217,3 +197,5 @@ async def send_welcome_email(user):
 **失控重构。** 你开始修一处。它碰到另一处。那处又碰到另一处。二十分钟后你改了 15 个文件，不确定自己最初要干什么。如果修复开始级联，停下。告诉用户发生了什么。继续之前先取得同意。
 
 这些准则起作用的标志是：diff 里不必要改动更少、因过度复杂而返工更少、澄清问题发生在实现之前而不是犯错之后。
+
+`````
