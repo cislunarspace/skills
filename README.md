@@ -9,7 +9,7 @@
 ## 快速开始
 
 ```bash
-npx skills@latest add cislunarspace/skills
+npx skills add cislunarspace/skills
 ```
 
 CLI 会读取 `.claude-plugin/plugin.json`，把 skill 软链到 `~/.claude/skills/`。安装后，在 agent 里直接用 `/dispatch`、`/sync-writing-standards`、`/git-commit` 等命令。
@@ -59,4 +59,4 @@ scripts/                        # 辅助脚本
 
 1. 在 `skills/<name>/` 下创建 `SKILL.md`（含 frontmatter：`name`、`description`）
 2. 在 `.claude-plugin/plugin.json` 的 `skills` 数组里加一行（必须以 `./` 开头）
-3. 重跑 `npx skills@latest add cislunarspace/skills`
+3. 重跑 `npx skills add cislunarspace/skills`
