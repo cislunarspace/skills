@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Return files modified by edit tools in the current agent session.
+ * 返回当前 agent 会话中被编辑工具修改过的文件。
  *
- * Primary source: Claude Code transcript JSONL for CLAUDE_CODE_SESSION_ID.
- * Secondary source: Kimi Code wire JSONL under ~/.kimi-code/sessions.
- * Fallback source: legacy .claude/session-files.log from cwd or git root.
+ * 主源：CLSAUDE_CODE_SESSION_ID 对应的 Claude Code 转录 JSONL。
+ * 次源：~/.kimi-code/sessions 下的 Kimi Code wire JSONL。
+ * 回退源：当前工作目录或 git 根目录下的旧版 .claude/session-files.log。
  *
- * Usage:
+ * 用法：
  *   node scripts/get-session-files.js [repo-root]
  *
- * Exit codes / stdout:
- *   "NO_LOG"        — no transcript or legacy log exists
- *   "NO_SESSION_ID" — CLAUDE_CODE_SESSION_ID env var not set
- *   "EMPTY"         — sources exist but no files for this session
- *   JSON array      — list of repo-relative file paths tracked this session
+ * 退出码 / 标准输出：
+ *   "NO_LOG"        — 不存在转录或旧版日志
+ *   "NO_SESSION_ID" — 未设置 CLAUDE_CODE_SESSION_ID 环境变量
+ *   "EMPTY"         — 源存在，但本会话没有文件
+ *   JSON array      — 本会话跟踪的仓库相对路径列表
  */
 
 const fs = require('fs');
@@ -21,13 +21,25 @@ const os = require('os');
 const path = require('path');
 const childProcess = require('child_process');
 
+// 会修改文件的工具名；扫描转录时只关心这些工具的输入。
 const EDIT_TOOL_NAMES = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
+
+// 旧版日志里超过这个时间戳的记录会被清理（24 小时）。
 const LEGACY_STALE_SECONDS = 86400;
+
+// 兜底扫描转录文件时，只考虑最近 14 天内修改过的文件。
 const TRANSCRIPT_LOOKBACK_MS = 14 * 24 * 60 * 60 * 1000;
+
+// 扫描时跳过过大的 jsonl 文件，避免意外读取超大日志。
 const MAX_DISCOVERY_FILE_BYTES = 50 * 1024 * 1024;
+
+// Kimi Code wire 文件只看最近 24 小时，减少误匹配其他会话。
 const KIMI_WIRE_LOOKBACK_MS = 24 * 60 * 60 * 1000;
+
+// 探测 wire 文件时只读前 200 行来找 cwd，避免读取整个文件。
 const KIMI_WIRE_CWD_PROBE_LINES = 200;
 
+// 用 git 找仓库根目录；不在 git 仓库里时退回到传入路径本身。
 function gitRoot(startPath) {
   try {
     return childProcess
@@ -41,15 +53,18 @@ function gitRoot(startPath) {
   }
 }
 
+// 命令行可传 repo-root，否则用当前目录。
 function repoRoot() {
   const explicitRoot = process.argv[2];
   return gitRoot(explicitRoot || process.cwd());
 }
 
+// Claude Code 用项目路径的编码形式作为目录名（把 / 替换成 -）。
 function encodeProjectPath(projectPath) {
   return projectPath.replace(/\//g, '-');
 }
 
+// 递归列出目录下所有 .jsonl 文件。
 function listJsonlFiles(directory) {
   if (!fs.existsSync(directory)) return [];
 
@@ -69,6 +84,7 @@ function listJsonlFiles(directory) {
   return files;
 }
 
+// 转录文件候选：不能太大、不能太旧。
 function isRecentTranscript(filePath) {
   try {
     const stat = fs.statSync(filePath);
@@ -81,6 +97,7 @@ function isRecentTranscript(filePath) {
   }
 }
 
+// 转录条目可能在不同字段存 sessionId，兼容几种写法。
 function entryMatchesSession(entry, sessionId) {
   return (
     entry?.sessionId === sessionId ||
@@ -90,6 +107,7 @@ function entryMatchesSession(entry, sessionId) {
   );
 }
 
+// 检查某个转录文件里是否至少有一行属于目标 session。
 function transcriptContainsSession(filePath, sessionId) {
   try {
     const lines = fs.readFileSync(filePath, 'utf8').split('\n').filter(Boolean);
@@ -105,13 +123,17 @@ function transcriptContainsSession(filePath, sessionId) {
   }
 }
 
+// 先按已知规则找转录文件；找不到再兜底扫描最近文件。
 function transcriptCandidates(sessionId, root) {
   const projectsDir = path.join(os.homedir(), '.claude', 'projects');
+
+  // 直接路径：按项目编码后的目录 + sessionId.jsonl。
   const encodedRoots = [...new Set([root, process.cwd()].map(encodeProjectPath))];
   const direct = encodedRoots.map((encodedRoot) =>
     path.join(projectsDir, encodedRoot, `${sessionId}.jsonl`)
   );
 
+  // 浅层扫描：项目目录下所有子目录里的 sessionId.jsonl。
   let shallow = [];
   if (fs.existsSync(projectsDir)) {
     shallow = fs
@@ -125,16 +147,19 @@ function transcriptCandidates(sessionId, root) {
   );
   if (exactMatches.length > 0) return exactMatches;
 
+  // 兜底：扫描所有近期 jsonl，逐行确认是否包含目标 session。
   return listJsonlFiles(projectsDir)
     .filter(isRecentTranscript)
     .filter((filePath) => transcriptContainsSession(filePath, sessionId));
 }
 
+// 判断 childPath 是否在 parentPath 内部（或就是 parentPath 本身）。
 function isPathInside(childPath, parentPath) {
   const relative = path.relative(parentPath, childPath);
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
 
+// 把路径转成仓库相对路径后加入集合；不在仓库内的路径会被忽略。
 function addIfInRepo(files, filePath, root, basePath) {
   if (!filePath || typeof filePath !== 'string') return;
 
@@ -147,11 +172,13 @@ function addIfInRepo(files, filePath, root, basePath) {
   files.add(path.relative(root, absolutePath));
 }
 
+// 从工具调用的输入里提取被修改的文件路径；支持嵌套工具调用。
 function addToolInputFiles(files, toolName, input, root, basePath) {
   if (input === null || typeof input !== 'object') return;
 
   const normalizedToolName = toolName.split('.').pop();
   if (EDIT_TOOL_NAMES.has(normalizedToolName)) {
+    // 不同编辑工具用的路径字段名不一样，分别尝试。
     addIfInRepo(files, input.file_path, root, basePath);
     addIfInRepo(files, input.path, root, basePath);
     addIfInRepo(files, input.notebook_path, root, basePath);
@@ -161,6 +188,7 @@ function addToolInputFiles(files, toolName, input, root, basePath) {
     }
   }
 
+  // 递归处理嵌套工具调用。
   if (Array.isArray(input.tool_uses)) {
     for (const nestedTool of input.tool_uses) {
       const nestedName = nestedTool.name || nestedTool.recipient_name || '';
@@ -170,6 +198,7 @@ function addToolInputFiles(files, toolName, input, root, basePath) {
   }
 }
 
+// 从 file-history-snapshot 条目里提取被跟踪的文件备份路径。
 function addFileHistorySnapshotFiles(files, entry, root) {
   if (entry?.type !== 'file-history-snapshot') return;
 
@@ -179,6 +208,7 @@ function addFileHistorySnapshotFiles(files, entry, root) {
   for (const filePath of Object.keys(backups)) addIfInRepo(files, filePath, root, root);
 }
 
+// 遍历转录文件的每一行，收集当前 session 里被编辑工具修改过的文件。
 function collectTranscriptFiles(transcriptPath, root, sessionId) {
   const files = new Set();
   const lines = fs.readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
@@ -191,6 +221,7 @@ function collectTranscriptFiles(transcriptPath, root, sessionId) {
       continue;
     }
 
+    // 如果条目带 sessionId 但不匹配，跳过。
     if (entry.sessionId && entry.sessionId !== sessionId) continue;
 
     addFileHistorySnapshotFiles(files, entry, root);
@@ -209,6 +240,7 @@ function collectTranscriptFiles(transcriptPath, root, sessionId) {
   return files;
 }
 
+// 旧版日志可能存放在 cwd 或 git 根目录的 .claude 下。
 function legacyLogCandidates(root) {
   return [
     path.join(process.cwd(), '.claude', 'session-files.log'),
@@ -216,6 +248,7 @@ function legacyLogCandidates(root) {
   ];
 }
 
+// 读取旧版日志，清理过期记录，返回当前 session 的文件集合。
 function collectLegacyLogFiles(logPath, sessionId, root) {
   const lines = fs.readFileSync(logPath, 'utf8').split('\n').filter(Boolean);
   const now = Math.floor(Date.now() / 1000);
@@ -231,20 +264,23 @@ function collectLegacyLogFiles(logPath, sessionId, root) {
     const filePath = rest.join('\t');
     const timestamp = Number.parseInt(ts, 10);
 
+    // 保留未过期的记录，以及当前 session 的所有记录。
     if (timestamp >= staleCutoff || entrySessionId === sessionId) keep.push(line);
     if (entrySessionId === sessionId) addIfInRepo(files, filePath, root, root);
   }
 
+  // 写回清理后的日志。
   fs.writeFileSync(logPath, keep.join('\n') + (keep.length ? '\n' : ''));
   return files;
 }
 
-// --- Kimi Code support -------------------------------------------------------
+// --- Kimi Code 支持 -------------------------------------------------------
 
 function kimiCodeRoot() {
   return path.join(os.homedir(), '.kimi-code');
 }
 
+// 遍历 ~/.kimi-code/sessions/<project>/<session>/agents/main/wire.jsonl。
 function listKimiWireFiles() {
   const sessionsDir = path.join(kimiCodeRoot(), 'sessions');
   if (!fs.existsSync(sessionsDir)) return [];
@@ -264,6 +300,7 @@ function listKimiWireFiles() {
   return wires;
 }
 
+// 读取 wire 文件开头，看其中 tool.call 的 cwd 是否和当前仓库有关联。
 function wireReferencesRepo(wirePath, root) {
   try {
     const fd = fs.openSync(wirePath, 'r');
@@ -285,6 +322,7 @@ function wireReferencesRepo(wirePath, root) {
         const cwd = entry?.event?.display?.cwd || entry?.event?.cwd || '';
         if (!cwd) continue;
         const normalizedCwd = path.normalize(cwd);
+        // cwd 与仓库互相包含，即认为相关。
         if (isPathInside(normalizedCwd, root) || isPathInside(root, normalizedCwd)) {
           return true;
         }
@@ -298,6 +336,7 @@ function wireReferencesRepo(wirePath, root) {
   }
 }
 
+// 找最近修改过、且与当前仓库相关的 Kimi wire 文件。
 function findKimiWire(root) {
   const cutoff = Date.now() - KIMI_WIRE_LOOKBACK_MS;
   const candidates = listKimiWireFiles()
@@ -309,6 +348,7 @@ function findKimiWire(root) {
   return candidates[0]?.wirePath || null;
 }
 
+// 从 Kimi wire 里收集 tool.call 中编辑工具修改过的文件。
 function collectKimiFiles(wirePath, root) {
   const files = new Set();
   const lines = fs.readFileSync(wirePath, 'utf8').split('\n').filter(Boolean);
@@ -332,14 +372,14 @@ function collectKimiFiles(wirePath, root) {
   return files;
 }
 
-// --- Main --------------------------------------------------------------------
+// --- 主流程 ----------------------------------------------------------------
 
 function main() {
   const root = repoRoot();
   const files = new Set();
   let foundSource = false;
 
-  // Claude Code path
+  // Claude Code 路径
   const claudeSessionId = process.env.CLAUDE_CODE_SESSION_ID || '';
   if (claudeSessionId) {
     for (const transcriptPath of transcriptCandidates(claudeSessionId, root)) {
@@ -349,6 +389,7 @@ function main() {
       }
     }
 
+    // 转录里没有文件时，再试试旧版日志。
     if (files.size === 0) {
       for (const logPath of [...new Set(legacyLogCandidates(root))]) {
         if (!fs.existsSync(logPath)) continue;
@@ -360,7 +401,7 @@ function main() {
     }
   }
 
-  // Kimi Code path
+  // Kimi Code 路径：只有 Claude Code 没找到文件时才走这里。
   if (files.size === 0) {
     const kimiWire = findKimiWire(root);
     if (kimiWire) {
@@ -381,6 +422,7 @@ function main() {
     return;
   }
 
+  // 输出排序后的仓库相对路径数组。
   console.log(JSON.stringify([...files].sort(), null, 2));
 }
 
