@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 把当前对话总结成交接文档，让接手的 agent（通常通过 dispatch）能直接继续。
 
-存到系统临时目录，文件名 `handoff-<简要主题>.md`——dispatch 按 `handoff-*.md` 模式搜索。
+存到系统临时目录，文件名 `handoff-<简要主题>.md`（dispatch 按 `handoff-*.md` 模式搜索）。
 
 ## 文档结构
 
