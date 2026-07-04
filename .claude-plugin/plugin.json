@@ -3,6 +3,7 @@
   "skills": [
     "./skills/dispatch",
     "./skills/sync-writing-standards",
-    "./skills/git-commit"
+    "./skills/git-commit",
+    "./skills/handoff"
   ]
 }
