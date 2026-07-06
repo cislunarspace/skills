@@ -11,6 +11,7 @@
     "./skills/grill-with-docs",
     "./skills/grilling",
     "./skills/domain-modeling",
-    "./skills/improve-codebase-architecture"
+    "./skills/improve-codebase-architecture",
+    "./skills/write-skill"
   ]
 }
