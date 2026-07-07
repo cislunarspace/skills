@@ -1,6 +1,6 @@
 ---
 name: to-issues
-description: 把计划、规格或 PRD 拆成可独立认领的 issue，发布到项目 issue tracker，按垂直切片（tracer bullet）划分。
+description: 把计划、规格或 PRD 拆成可独立认领的 issue，发布到项目 issue tracker，按垂直切片（tracer bullet）划分。当用户要求把计划拆成 issue、创建 issue 或发布到 issue tracker 时使用。
 disable-model-invocation: true
 ---
 

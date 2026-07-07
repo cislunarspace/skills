@@ -1,6 +1,6 @@
 ---
 name: dispatch
-description: 把一组任务按依赖关系分层，然后并行调用多个 Agent 子代理逐层执行。
+description: 把一组任务按依赖关系分层，然后并行调用多个 Agent 子代理逐层执行。当用户说"dispatch"、"并行执行任务"，或传入计划文件、issue 编号要求并行调度时使用。
 argument-hint: "计划文件路径、issue 编号（如 #N），或 'latest'"
 ---
 

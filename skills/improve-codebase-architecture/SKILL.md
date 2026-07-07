@@ -1,6 +1,6 @@
 ---
 name: improve-codebase-architecture
-description: 审计代码仓库的目录组织与文件内部设计，找出组织混乱与设计不够优雅的地方，以 HTML 报告呈现发现项，并可将选中项转为 issue。
+description: 审计代码仓库的目录组织与文件内部设计，找出组织混乱与设计不够优雅的地方，以 HTML 报告呈现发现项，并可将选中项转为 issue。当用户想审计代码架构、改进目录组织或文件设计时使用。
 disable-model-invocation: true
 ---
 

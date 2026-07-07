@@ -1,7 +1,6 @@
 ---
 name: git-commit
 description: 只提交当前会话改动的文件，避免无关文件被一起提交。当用户说"git commit"、"commit"、"提交"或要求提交改动时使用。
-category: github
 ---
 
 # Git Commit

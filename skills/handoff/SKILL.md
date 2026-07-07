@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: 把当前对话压缩成交接文档，供 dispatch 接手继续。
+description: 把当前对话压缩成交接文档，供 dispatch 接手继续。当用户说"交接"、"handoff"，或准备让 dispatch 接手当前会话时使用。
 argument-hint: "下一次会话要做什么？"
 disable-model-invocation: true
 ---

@@ -1,6 +1,6 @@
 ---
 name: sync-writing-standards
-description: 将预定义的交流语言、写作要求、编码准则注入当前仓库的 CLAUDE.md 和 AGENTS.md。
+description: 将预定义的交流语言、写作要求、编码准则注入当前仓库的 CLAUDE.md 和 AGENTS.md。当用户说"同步写作规范"、"注入规范"、"sync-writing-standards"或要求把统一准则写进 CLAUDE.md/AGENTS.md 时使用。
 ---
 
 # sync-writing-standards

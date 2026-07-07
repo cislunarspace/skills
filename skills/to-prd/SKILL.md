@@ -1,6 +1,6 @@
 ---
 name: to-prd
-description: 把当前对话综合成一份 PRD，发布到项目 issue tracker。不做访谈，只整理已经讨论过的内容。
+description: 把当前对话综合成一份 PRD，发布到项目 issue tracker。不做访谈，只整理已经讨论过的内容。当用户说"to-prd"、"转 PRD"、"写 PRD"或要求把当前对话整理成 PRD 时使用。
 disable-model-invocation: true
 ---
 
