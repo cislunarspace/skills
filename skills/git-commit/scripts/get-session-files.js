@@ -10,9 +10,9 @@
  *   node scripts/get-session-files.js [repo-root]
  *
  * 退出码 / 标准输出：
- *   "NO_LOG"        — 不存在转录或旧版日志
- *   "NO_SESSION_ID" — 未设置 CLAUDE_CODE_SESSION_ID 环境变量
- *   "EMPTY"         — 源存在，但本会话没有文件
+ *   "无日志"        — 不存在转录或旧版日志
+ *   "无会话ID"      — 未设置 CLAUDE_CODE_SESSION_ID 环境变量
+ *   "空"            — 源存在，但本会话没有文件
  *   JSON array      — 本会话跟踪的仓库相对路径列表
  */
 
@@ -452,12 +452,12 @@ function main() {
   }
 
   if (!foundSource) {
-    console.log(claudeSessionId ? 'NO_LOG' : 'NO_SESSION_ID');
+    console.log(claudeSessionId ? '无日志' : '无会话ID');
     return;
   }
 
   if (files.size === 0) {
-    console.log('EMPTY');
+    console.log('空');
     return;
   }
 
