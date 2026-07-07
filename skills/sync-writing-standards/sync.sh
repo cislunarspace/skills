@@ -10,12 +10,10 @@ set -euo pipefail
 SKILL_DIR="${SKILL_DIR:-$(cd "$(dirname "$0")" && pwd -P)}"
 TARGET_DIR="${1:-$PWD}"
 STANDARDS="$SKILL_DIR/references/standards.md"
-TPL_CLAUDE="$SKILL_DIR/templates/CLAUDE.md"
-TPL_AGENTS="$SKILL_DIR/templates/AGENTS.md"
 SECTIONS=("交流语言" "写作要求" "编码准则")
 
 # ---- 前置检查 ----
-for f in "$STANDARDS" "$TPL_CLAUDE" "$TPL_AGENTS"; do
+for f in "$STANDARDS"; do
     [ -f "$f" ] || { echo "错误：缺少 $f" >&2; exit 1; }
 done
 [ -d "$TARGET_DIR" ] || { echo "错误：目标目录不存在: $TARGET_DIR" >&2; exit 1; }
@@ -77,37 +75,26 @@ inject() {
     mv "$tmp" "$target"
 }
 
-# 从已抽取的三节（SEC_CONTENT 全局）构建模板内容。
-build_template() {
-    local h1="$1" first=1
-    printf '# %s\n\n' "$h1"
-    for title in "${SECTIONS[@]}"; do
-        [ $first -eq 0 ] && printf '\n'
-        printf '%s\n' "${SEC_CONTENT[$title]}"
-        first=0
-    done
-}
-
 # 同步单个目标文件
 sync_target() {
-    local name="$1" tpl="$2" target="$3"
+    local name="$1" target="$2"
     if [ ! -f "$target" ]; then
-        echo "==> $name: 不存在，从模板创建"
-        cp "$tpl" "$target"
+        echo "==> $name: 不存在，创建并注入三节"
+        : > "$target"
     else
         echo "==> $name: 已存在，替换/追加三节"
         lf "$target"
-        for title in "${SECTIONS[@]}"; do
-            inject "$target" "$title" "${SEC_CONTENT[$title]}"
-        done
-        ensure_title "$target" "# $name"
     fi
+    for title in "${SECTIONS[@]}"; do
+        inject "$target" "$title" "${SEC_CONTENT[$title]}"
+    done
+    ensure_title "$target" "# $name"
 }
 
 # ---- 主流程 ----
 
 echo "==> 归一化源文件行尾 (LF)"
-lf "$STANDARDS" "$TPL_CLAUDE" "$TPL_AGENTS"
+lf "$STANDARDS"
 
 echo "==> 抽取三节原文"
 declare -A SEC_CONTENT
@@ -116,21 +103,17 @@ for title in "${SECTIONS[@]}"; do
     [ -n "${SEC_CONTENT[$title]}" ] || { echo "错误：standards.md 缺 ## $title" >&2; exit 1; }
 done
 
-echo "==> 重建模板 (从 standards.md 派生)"
-build_template "CLAUDE.md" > "$TPL_CLAUDE"
-build_template "AGENTS.md" > "$TPL_AGENTS"
-
 CLAUDE="$TARGET_DIR/CLAUDE.md"
 AGENTS="$TARGET_DIR/AGENTS.md"
 
-sync_target "CLAUDE.md" "$TPL_CLAUDE" "$CLAUDE"
-sync_target "AGENTS.md" "$TPL_AGENTS" "$AGENTS"
+sync_target "CLAUDE.md" "$CLAUDE"
+sync_target "AGENTS.md" "$AGENTS"
 
 echo "==> 归一化目标文件行尾 (LF)"
 lf "$CLAUDE" "$AGENTS"
 
 echo "==> 验证"
-for f in "$STANDARDS" "$TPL_CLAUDE" "$TPL_AGENTS" "$CLAUDE" "$AGENTS"; do
+for f in "$STANDARDS" "$CLAUDE" "$AGENTS"; do
     if [ "$(count_cr "$f")" -gt 0 ]; then
         echo "  失败：$f 含 CR" >&2; exit 1
     fi
