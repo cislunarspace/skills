@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sync.sh — 把 references/STANDARDS.md 三节注入目标仓库 CLAUDE.md / AGENTS.md。
+# sync.sh — 把 references/standards.md 三节注入目标仓库 CLAUDE.md / AGENTS.md。
 # 单一入口：agent 只跑本脚本，不自己解析 markdown、不手动 Edit、不自己跑 od/sed。
 #
 # 用法: bash sync.sh [目标仓库根目录]
@@ -9,16 +9,16 @@ set -euo pipefail
 
 SKILL_DIR="${SKILL_DIR:-$(cd "$(dirname "$0")" && pwd -P)}"
 TARGET_DIR="${1:-$PWD}"
-STANDARDS="$SKILL_DIR/references/STANDARDS.md"
+STANDARDS="$SKILL_DIR/references/standards.md"
 TPL_CLAUDE="$SKILL_DIR/templates/CLAUDE.md"
 TPL_AGENTS="$SKILL_DIR/templates/AGENTS.md"
 SECTIONS=("交流语言" "写作要求" "编码准则")
 
 # ---- 前置检查 ----
 for f in "$STANDARDS" "$TPL_CLAUDE" "$TPL_AGENTS"; do
-    [ -f "$f" ] || { echo "ERROR: 缺少 $f" >&2; exit 1; }
+    [ -f "$f" ] || { echo "错误：缺少 $f" >&2; exit 1; }
 done
-[ -d "$TARGET_DIR" ] || { echo "ERROR: 目标目录不存在: $TARGET_DIR" >&2; exit 1; }
+[ -d "$TARGET_DIR" ] || { echo "错误：目标目录不存在: $TARGET_DIR" >&2; exit 1; }
 
 # ---- 工具函数 ----
 
@@ -113,10 +113,10 @@ echo "==> 抽取三节原文"
 declare -A SEC_CONTENT
 for title in "${SECTIONS[@]}"; do
     SEC_CONTENT[$title]=$(extract "$STANDARDS" "$title")
-    [ -n "${SEC_CONTENT[$title]}" ] || { echo "ERROR: STANDARDS.md 缺 ## $title" >&2; exit 1; }
+    [ -n "${SEC_CONTENT[$title]}" ] || { echo "错误：standards.md 缺 ## $title" >&2; exit 1; }
 done
 
-echo "==> 重建模板 (从 STANDARDS.md 派生)"
+echo "==> 重建模板 (从 standards.md 派生)"
 build_template "CLAUDE.md" > "$TPL_CLAUDE"
 build_template "AGENTS.md" > "$TPL_AGENTS"
 
@@ -132,16 +132,16 @@ lf "$CLAUDE" "$AGENTS"
 echo "==> 验证"
 for f in "$STANDARDS" "$TPL_CLAUDE" "$TPL_AGENTS" "$CLAUDE" "$AGENTS"; do
     if [ "$(count_cr "$f")" -gt 0 ]; then
-        echo "  FAIL: $f 含 CR" >&2; exit 1
+        echo "  失败：$f 含 CR" >&2; exit 1
     fi
 done
 for target in "$CLAUDE" "$AGENTS"; do
     expected="# $(basename "$target")"
-    [ "$(head -1 "$target")" = "$expected" ] || { echo "  FAIL: $target 第一行应为 $expected" >&2; exit 1; }
+    [ "$(head -1 "$target")" = "$expected" ] || { echo "  失败：$target 第一行应为 $expected" >&2; exit 1; }
     for title in "${SECTIONS[@]}"; do
         got=$(extract "$target" "$title")
         if [ "$got" != "${SEC_CONTENT[$title]}" ]; then
-            echo "  FAIL: $target 的 ## $title 与 STANDARDS.md 不一致" >&2
+            echo "  失败：$target 的 ## $title 与 standards.md 不一致" >&2
             diff <(printf '%s\n' "${SEC_CONTENT[$title]}") <(printf '%s\n' "$got") >&2 || true
             exit 1
         fi
