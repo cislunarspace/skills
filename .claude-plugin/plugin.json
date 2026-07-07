@@ -12,6 +12,7 @@
     "./skills/grilling",
     "./skills/domain-modeling",
     "./skills/improve-codebase-architecture",
-    "./skills/write-skill"
+    "./skills/write-skill",
+    "./skills/pdf-with-mineru"
   ]
 }
