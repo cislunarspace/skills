@@ -1,6 +1,6 @@
 ---
-name: setup-ouuyangjiahong-skills
-description: 为当前仓库配置工程技能所需的设施：设置 issue tracker、分诊标签词汇、领域文档布局。在其他工程技能首次使用前运行一次。
+name: setup-ouyangjiahong-skills
+description: 为当前仓库配置工程技能所需的设施：设置 issue tracker、分诊标签词汇、领域文档布局。当用户说"初始化工程技能"、"配置 issue tracker"或在其他工程技能首次使用前要求设置时使用。
 disable-model-invocation: true
 ---
 
