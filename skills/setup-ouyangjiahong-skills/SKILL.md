@@ -114,11 +114,11 @@ disable-model-invocation: true
 
 然后用本技能目录下的种子模板写三个文档文件：
 
-- [issue-tracker-github.md](./issue-tracker-github.md)：GitHub issue tracker
-- [issue-tracker-gitlab.md](./issue-tracker-gitlab.md)：GitLab issue tracker
-- [issue-tracker-local.md](./issue-tracker-local.md)：本地 markdown issue tracker
-- [triage-labels.md](./triage-labels.md)：标签映射
-- [domain.md](./domain.md)：领域文档读取规则 + 布局
+- [issue-tracker-github.md](./references/issue-tracker-github.md)：GitHub issue tracker
+- [issue-tracker-gitlab.md](./references/issue-tracker-gitlab.md)：GitLab issue tracker
+- [issue-tracker-local.md](./references/issue-tracker-local.md)：本地 markdown issue tracker
+- [triage-labels.md](./references/triage-labels.md)：标签映射
+- [domain.md](./references/domain.md)：领域文档读取规则 + 布局
 
 对于"其他"issue tracker，根据用户描述从零写 `docs/agents/issue-tracker.md`。
 
