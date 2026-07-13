@@ -1,5 +1,38 @@
 {
   "name": "personal-skills",
+  "groups": {
+    "engineering": {
+      "description": "工程相关skills：任务调度、Git提交、写作规范、交接文档、PRD、issue管理、设计追问、领域建模、架构审计、PDF解析",
+      "skills": [
+        "./skills/dispatch",
+        "./skills/sync-writing-standards",
+        "./skills/git-commit",
+        "./skills/handoff",
+        "./skills/to-prd",
+        "./skills/to-issues",
+        "./skills/setup-ouyangjiahong-skills",
+        "./skills/grill-with-docs",
+        "./skills/grilling",
+        "./skills/domain-modeling",
+        "./skills/improve-codebase-architecture",
+        "./skills/write-skill",
+        "./skills/pdf-with-mineru"
+      ]
+    },
+    "research": {
+      "description": "研究相关skills：研究规划、问题界定、资料收集、资料分析、论证构建、报告撰写、视觉呈现、研究伦理",
+      "skills": [
+        "./skills/research-planning",
+        "./skills/problem-identification",
+        "./skills/source-collection",
+        "./skills/source-analysis",
+        "./skills/argument-construction",
+        "./skills/report-writing",
+        "./skills/visual-presentation",
+        "./skills/research-ethics"
+      ]
+    }
+  },
   "skills": [
     "./skills/dispatch",
     "./skills/sync-writing-standards",

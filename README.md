@@ -9,10 +9,27 @@
 ## 快速开始
 
 ```bash
+# 安装所有 skills
 npx skills add cislunarspace/skills
+
+# 只安装工程相关 skills（默认）
+npx skills add cislunarspace/skills --group engineering
+
+# 只安装研究相关 skills
+npx skills add cislunarspace/skills --group research
+
+# 安装多个分组
+npx skills add cislunarspace/skills --group engineering research
 ```
 
 CLI 会读取 `.claude-plugin/plugin.json`，把 skill 软链到 `~/.claude/skills/`。安装后，在 agent 里直接用 `/dispatch`、`/git-commit`、`/to-prd`、`/handoff`、`/grill-with-docs` 等命令。
+
+### 分组说明
+
+| 分组 | 说明 | 包含的 skills |
+|------|------|---------------|
+| **engineering** | 工程相关 | dispatch、git-commit、sync-writing-standards、handoff、to-prd、to-issues、setup-ouyangjiahong-skills、grilling、grill-with-docs、domain-modeling、improve-codebase-architecture、write-skill、pdf-with-mineru |
+| **research** | 研究相关 | research-planning、problem-identification、source-collection、source-analysis、argument-construction、report-writing、visual-presentation、research-ethics |
 
 ## 这些 Skill 解决什么问题
 
