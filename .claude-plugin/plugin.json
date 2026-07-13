@@ -13,6 +13,14 @@
     "./skills/domain-modeling",
     "./skills/improve-codebase-architecture",
     "./skills/write-skill",
-    "./skills/pdf-with-mineru"
+    "./skills/pdf-with-mineru",
+    "./skills/research-planning",
+    "./skills/problem-identification",
+    "./skills/source-collection",
+    "./skills/source-analysis",
+    "./skills/argument-construction",
+    "./skills/report-writing",
+    "./skills/visual-presentation",
+    "./skills/research-ethics"
   ]
 }
