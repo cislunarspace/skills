@@ -1,4 +1,5 @@
 node_modules
 .agents/
+.mimocode/
 skills-lock.json
 .claude/session-files.log
