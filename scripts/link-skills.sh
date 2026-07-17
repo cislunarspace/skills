@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 注意：bash 的 GROUPS 是记录用户组 id 的特殊只读数组，
+# 不能直接当普通数组用，先 unset 掉以免污染下面的分组参数。
+unset GROUPS
+
 # 把本仓库的 skill 软链到本地 Claude Code 安装目录。每个 entry 是到
 # 仓库内的 symlink，`git pull` 自动同步；新增/删除/改名后重跑一次。
 #
@@ -11,6 +15,8 @@ set -euo pipefail
 #   ./scripts/link-skills.sh engineering research  # 安装工程和研究相关 skills
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
+
+source "$(dirname "$0")/lib/find-skills.sh"
 
 # 解析参数
 GROUPS=()
@@ -33,19 +39,14 @@ done
 # 如果没有指定分组，默认安装所有
 if [ ${#GROUPS[@]} -eq 0 ]; then
   echo "未指定分组，安装所有 skills..."
-  find "$REPO/skills" -name SKILL.md -not -path '*/deprecated/*' -print0 | while IFS= read -r -d '' skill_md; do
-    src="$(dirname "$skill_md")"
-    name="$(basename "$src")"
-    echo "found: $name"
-  done
 else
   echo "指定分组: ${GROUPS[*]}"
 fi
 
-# 读取 plugin.json 获取分组信息
-PLUGIN_JSON="$REPO/.claude-plugin/plugin.json"
-if [ ! -f "$PLUGIN_JSON" ]; then
-  echo "错误: 找不到 $PLUGIN_JSON" >&2
+# 读取 marketplace.json 获取分组信息（每个 plugin 有 name 和 skills[]）
+MARKETPLACE_JSON="$REPO/.claude-plugin/marketplace.json"
+if [ ! -f "$MARKETPLACE_JSON" ]; then
+  echo "错误: 找不到 $MARKETPLACE_JSON" >&2
   exit 1
 fi
 
@@ -55,39 +56,42 @@ srcs=()
 
 if [ ${#GROUPS[@]} -eq 0 ]; then
   # 安装所有 skills
-  while IFS= read -r -d '' skill_md; do
-    src="$(dirname "$skill_md")"
-    names+=("$(basename "$src")")
+  while IFS= read -r src; do
+    name="$(basename "$src")"
+    names+=("$name")
     srcs+=("$src")
-  done < <(find "$REPO/skills" -name SKILL.md -not -path '*/deprecated/*' -print0)
+    echo "found: $name"
+  done < <(list_skill_dirs)
 else
-  # 根据分组筛选
+  # 根据分组筛选（marketplace 的 plugins[].name 用首字母大写，
+  # 如 "Engineering"/"Research"，这里按小写匹配，兼容目录名）
   for group in "${GROUPS[@]}"; do
+    group_lower="$(echo "$group" | tr '[:upper:]' '[:lower:]')"
     # 使用 jq 或 grep 解析 JSON
     if command -v jq &>/dev/null; then
+      # 找到 name 小写后等于 $group_lower 的 plugin，列出它的 skills[]
       while IFS= read -r skill_path; do
-        # 移除 ./skills/ 前缀，获取目录名
-        name="${skill_path#./skills/}"
-        src="$REPO/skills/$name"
+        # skill_path 形如 ./skills/engineering/dispatch
+        # src 指向仓库内该目录，name 用 basename（扁平安装到 $DEST）
+        src="$REPO/skills/${skill_path#./skills/}"
         if [ -d "$src" ]; then
-          names+=("$name")
+          names+=("$(basename "$src")")
           srcs+=("$src")
         fi
-      done < <(jq -r ".groups.$group.skills[]" "$PLUGIN_JSON" 2>/dev/null || true)
+      done < <(jq -r --arg g "$group_lower" \
+        '.plugins[] | select((.name | ascii_downcase) == $g) | .skills[]' \
+        "$MARKETPLACE_JSON" 2>/dev/null || true)
     else
-      # 如果没有 jq，使用 grep 解析
+      # 如果没有 jq，使用 grep 解析：抓 "./skills/<group>/..." 路径
       echo "警告: 未安装 jq，使用 grep 解析 JSON（可能不准确）" >&2
-      # 简单的 grep 解析
-      grep -A 100 "\"$group\"" "$PLUGIN_JSON" | grep '"./skills/' | head -20 | while IFS= read -r line; do
-        name=$(echo "$line" | grep -o '"./skills/[^"]*"' | tr -d '"' | sed 's|./skills/||')
-        if [ -n "$name" ]; then
-          src="$REPO/skills/$name"
-          if [ -d "$src" ]; then
-            names+=("$name")
-            srcs+=("$src")
-          fi
+      while IFS= read -r skill_path; do
+        src="$REPO/skills/${skill_path#./skills/}"
+        if [ -d "$src" ]; then
+          names+=("$(basename "$src")")
+          srcs+=("$src")
         fi
-      done
+      done < <(command grep -oE '"\./skills/'"$group_lower"'(/[^"]*)?"' "$MARKETPLACE_JSON" \
+        | tr -d '"' | sed 's|^\./skills/||')
     fi
   done
 fi

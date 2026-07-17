@@ -5,4 +5,7 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 
-find "$REPO/skills" -name SKILL.md -not -path '*/deprecated/*' | sed "s|^$REPO/||" | sort
+source "$(dirname "$0")/lib/find-skills.sh"
+
+# list_skill_dirs 输出绝对路径，转成相对仓库根的 SKILL.md 路径并排序。
+list_skill_dirs | sed "s|^$REPO/||; s|\$|/SKILL.md|" | sort

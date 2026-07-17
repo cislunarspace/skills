@@ -8,6 +8,8 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
+source "$(dirname "$0")/lib/find-skills.sh"
+
 origin_url="$(git remote get-url origin 2>/dev/null || true)"
 origin_path="${origin_url%.git}"
 origin_name="${origin_path##*/:}"
@@ -34,7 +36,7 @@ while IFS= read -r skill_md; do
     echo "error: $skill_md missing name/description frontmatter" >&2
     bad_skills=$((bad_skills + 1))
   fi
-done < <(find "$REPO/skills" -name SKILL.md -not -path '*/deprecated/*')
+done < <(list_skill_dirs | sed 's|$|/SKILL.md|')
 
 if [ "$bad_refs" -gt 0 ] || [ "$bad_skills" -gt 0 ]; then
   exit 1
