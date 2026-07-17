@@ -6,6 +6,7 @@
   "scripts": {
     "link": "scripts/link-skills.sh",
     "list": "scripts/list-skills.sh",
-    "check": "scripts/check-skills.sh"
+    "check": "scripts/check-skills.sh",
+    "test": "node --test 'skills/**/*.test.js' && bash skills/engineering/sync-writing-standards/sync-test.sh"
   }
 }

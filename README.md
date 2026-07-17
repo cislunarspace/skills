@@ -138,6 +138,27 @@ skills/
 scripts/                         # 辅助脚本
 ```
 
+## 测试
+
+仓库里目前有两个测试，分属两个 skill、用不同的技术栈（因为被测对象本身一个是 Node 脚本、一个是 bash 脚本），都和被测代码 co-located。一条命令聚合跑：
+
+```bash
+npm test
+```
+
+等价于：
+
+```bash
+node --test 'skills/**/*.test.js' && bash skills/engineering/sync-writing-standards/sync-test.sh
+```
+
+| 测试 | 框架 | 被测对象 | 测什么 |
+|------|------|----------|--------|
+| `skills/engineering/git-commit/scripts/get-session-files.test.js` | Node 内置 `node:test` | [`get-session-files.js`](./skills/engineering/git-commit/scripts/get-session-files.js)（黑盒，通过子进程调用） | 从会话日志里还原本会话改动的文件列表：无会话 ID、无日志、空日志、正常列表、仓库外路径过滤等情况 |
+| `skills/engineering/sync-writing-standards/sync-test.sh` | 手写 bash 测试框架 | [`sync.sh`](./skills/engineering/sync-writing-standards/sync.sh)（子进程调用） | 节级替换逻辑：新建 `CLAUDE.md`/`AGENTS.md`、更新已存在文件、保留自定义节、已是最新时跳过、`standards.md` 缺失时报错 |
+
+`node --test 'skills/**/*.test.js'` 用 glob 自动发现测试，后续在 `skills/` 下新增的 `.test.js` 会被自动纳入，无需改 `package.json`。改任何 skill 之前和之后都建议跑一遍 `npm test`。
+
 ## 新增 Skill
 
 1. 在 `skills/<group>/<name>/` 下创建 `SKILL.md`（含 frontmatter：`name`、`description`）。写作规范见 [`docs/skill-writing.md`](./docs/skill-writing.md)，可从 [`docs/templates/SKILL.md`](./docs/templates/SKILL.md) 复制骨架起步
