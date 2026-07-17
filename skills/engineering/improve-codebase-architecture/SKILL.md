@@ -61,9 +61,9 @@ disable-model-invocation: true
 
 报告分两大类章节：**目录组织**（`#directory`）与**文件内部设计**（`#file-design`）。每项一张卡片：位置、问题、建议、前后对比图，外加两项不可少——**依据**（触了哪个透镜或 `AGENTS.md` 的哪条准则，标注是“项目约定”还是“通用最佳实践”）与**严重程度**（`High` / `Medium` / `Low`）。末尾放一个**首推方案**章节：先动哪个发现项，为什么。
 
-卡片完整字段、HTML 脚手架、图表模式与样式指引见 [HTML-REPORT.md](HTML-REPORT.md)。
+卡片完整字段、HTML 脚手架、图表模式与样式指引见 [references/html-report.md](references/html-report.md)。
 
-**领域名词用 `CONTEXT.md` 的词汇**（`CONTEXT.md` 定义了 “Order”，就讲“Order 接单模块”，不要说 “FooBarHandler”）。措辞规矩（写具体可观察的变化，不写“更易维护”这类空话）见 HTML-REPORT.md 的“语气”一节。
+**领域名词用 `CONTEXT.md` 的词汇**（`CONTEXT.md` 定义了 “Order”，就讲“Order 接单模块”，不要说 “FooBarHandler”）。措辞规矩（写具体可观察的变化，不写“更易维护”这类空话）见 references/html-report.md 的“语气”一节。
 
 此时**不要**动手改代码。文件写好后，问用户：“想展开看哪一个？”
 
