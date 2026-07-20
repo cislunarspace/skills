@@ -6,25 +6,25 @@ disable-model-invocation: true
 
 # To PRD
 
-基于当前对话上下文和对代码库的理解，产出一份 PRD。不要访谈用户，只整理你已掌握的信息。
+基于当前对话上下文和对代码库的理解，产出一份 PRD。不访谈用户，只整理已掌握的信息。
 
-issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 `docs/agents/triage-labels.md`。
+issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 `docs/agents/triage-labels.md`。PRD 全文用项目的领域术语（见 `CONTEXT.md`），遵守相关区域的 ADR。
 
 ## 步骤
 
 ### 1. 探索代码库
 
-如果还没看过代码库，先探索一遍，理解当前状态。PRD 全文使用项目的领域术语（见 `CONTEXT.md`），遵守相关区域的 ADR。
+如果还没看过代码库，先探索一遍，理解当前状态。
 
 ### 2. 确定测试切面
 
-勾勒出要测试这个功能的切面。优先复用已有切面，而非新造。尽量用最高的切面，切面越少越好，理想数量是一。需要新切面时，提议在你能找到的最高位置。
+测试要下钩子的地方，叫**测试切面**。一个切面就是一处能从外部观察行为、可以用测试驱动它的接口（HTTP 端点、CLI 命令、导出的函数等）。
 
-与用户确认这些切面符合预期。
+原则：**优先复用已有切面，而非新造；能用高层的，就不开低层的；切面越少越好，理想是一。** 高层切面（如端到端 HTTP 测试）能覆盖的，就别为它单独开单元测试切面。必须新切面时，选你能找到的最高位置，与用户确认。
 
 ### 3. 写 PRD 并发布
 
-用下面的模板写 PRD，发布到项目 issue tracker。打上 `ready-for-agent` 标签（不需要额外分诊）。
+用下面的模板写 PRD，先把草稿展示给用户确认，再用 `gh issue create` 发布到 issue tracker，打上 `ready-for-agent` 标签（不需要额外分诊）。
 
 <prd-template>
 
