@@ -3,3 +3,4 @@ node_modules
 .mimocode/
 skills-lock.json
 .claude/session-files.log
+.zcode/
