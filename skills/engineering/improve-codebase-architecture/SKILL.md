@@ -1,6 +1,6 @@
 ---
 name: improve-codebase-architecture
-description: 审计代码仓库的目录组织与文件内部设计，找出组织混乱与设计不够优雅的地方，以 HTML 报告呈现发现项，并可将选中项转为 issue。当用户想审计代码架构、改进目录组织或文件设计时使用。
+description: 审计代码仓库的目录组织与文件内部设计，找出组织欠妥与设计不够优雅的地方，以 HTML 报告呈现发现项，并可将选中项转为 issue。当用户想审计代码架构、改进目录组织或文件设计时使用。
 disable-model-invocation: true
 ---
 
@@ -8,9 +8,11 @@ disable-model-invocation: true
 
 审计代码仓库在两个维度上的健康度：**目录组织**（代码是否按清晰的结构整理好）与**文件内部设计**（每个文件的设计是否优雅）。把发现项汇总成 HTML 报告，再就你选中的项转为 issue。
 
-检查的标准来自两处，叠加使用：通用的工程最佳实践，以及本项目 `AGENTS.md`（及 `CLAUDE.md`、`CONTEXT.md`）声明的约定与编码准则。项目自己声明了的，以项目约定为准；项目没说的，用通用最佳实践判断。
+检查的标准有两类：本项目 `AGENTS.md`（及 `CLAUDE.md`、`CONTEXT.md`）声明的约定与编码准则，以及通用的工程最佳实践。项目声明了的，以项目约定为准；项目没声明的，用通用最佳实践判断。
 
 判断的本质是看代码是否抓住了它要表达的概念：目录组织问“概念被放对位置了吗”，文件内部设计问“这个概念被表达得清楚吗”。
+
+发现项的领域名词用 `CONTEXT.md` 的词汇；与 ADR 冲突的发现项要明确标注，不要静默覆盖。
 
 ## 流程
 
@@ -57,13 +59,11 @@ disable-model-invocation: true
 
 把一份自包含的 HTML 文件写到系统临时目录，不要落进仓库。临时目录从 `$TMPDIR` 解析，回退到 `/tmp`（Windows 用 `%TEMP%`），写入 `<tmpdir>/architecture-review-<timestamp>.html`，每次运行一个新文件。为用户打开它（Linux 用 `xdg-open <path>`，macOS 用 `open <path>`，Windows 用 `start <path>`），并告知绝对路径。
 
-报告用 **Tailwind（CDN）** 做布局与样式，用 **Mermaid（CDN）** 画图（依赖图、调用流、时序这类图状结构交给 Mermaid，它可靠）；更编辑化的可视化（目录树对比、层叠剖面）用手写 div 和内联 SVG。两者混用，别什么都靠 Mermaid。每个发现项都配一张**前后对比可视化**。要直观。
+报告用 **Tailwind（CDN）** 做布局与样式，用 **Mermaid（CDN）** 画图。每个发现项都配一张**前后对比可视化**。要直观。
 
 报告分两大类章节：**目录组织**（`#directory`）与**文件内部设计**（`#file-design`）。每项一张卡片：位置、问题、建议、前后对比图，外加两项不可少——**依据**（触了哪个透镜或 `AGENTS.md` 的哪条准则，标注是“项目约定”还是“通用最佳实践”）与**严重程度**（`High` / `Medium` / `Low`）。末尾放一个**首推方案**章节：先动哪个发现项，为什么。
 
-卡片完整字段、HTML 脚手架、图表模式与样式指引见 [references/html-report.md](references/html-report.md)。
-
-**领域名词用 `CONTEXT.md` 的词汇**（`CONTEXT.md` 定义了 “Order”，就讲“Order 接单模块”，不要说 “FooBarHandler”）。措辞规矩（写具体可观察的变化，不写“更易维护”这类空话）见 references/html-report.md 的“语气”一节。
+卡片完整字段、HTML 脚手架、图表模式、样式指引与措辞规矩见 [references/html-report.md](references/html-report.md)。
 
 此时**不要**动手改代码。文件写好后，问用户：“想展开看哪一个？”
 
