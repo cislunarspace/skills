@@ -22,6 +22,7 @@
         "./skills/engineering/codebase-design",
         "./skills/engineering/implement",
         "./skills/engineering/tdd",
+        "./skills/engineering/open-pr",
         "./skills/engineering/resolving-merge-conflicts",
         "./skills/engineering/prototype",
         "./skills/engineering/wayfinder",
