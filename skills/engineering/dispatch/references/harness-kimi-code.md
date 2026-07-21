@@ -2,7 +2,7 @@
 
 本文规定 dispatch 在 Kimi Code 中调用子代理的方式。任务分层、层间推进和验证收尾见 `../SKILL.md`。
 
-## 逐层执行
+## 普通模式
 
 每层必须收齐全部任务的结果，再进入下一层。
 
@@ -14,6 +14,8 @@
 - 单任务使用前台 `Agent`，不设 `run_in_background`
 
 ## 多阶段编排
+
+Kimi Code 无 ultracode 等价模式；多层编排仍按 AgentSwarm / Agent 逐层推进。
 
 用户可以用 `/swarm on|off` 切换会话级 swarm mode，也可以用 `/swarm <task>` 针对一个任务启用。无论会话是否处于 swarm mode，dispatch 都按层推进：
 
