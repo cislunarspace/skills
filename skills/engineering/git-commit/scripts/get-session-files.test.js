@@ -22,9 +22,18 @@ function createTmpDir() {
 // 辅助函数：运行脚本并捕获输出
 function runScript(args = [], env = {}) {
   try {
+    // 合并环境变量时，env 参数中的 undefined 值会删除对应的环境变量
+    const mergedEnv = { ...process.env };
+    for (const key in env) {
+      if (env[key] === undefined) {
+        delete mergedEnv[key];
+      } else {
+        mergedEnv[key] = env[key];
+      }
+    }
     const result = childProcess.execFileSync(process.execPath, [SCRIPT_PATH, ...args], {
       encoding: 'utf8',
-      env: { ...process.env, ...env },
+      env: mergedEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     return { stdout: result.trim(), stderr: '', exitCode: 0 };
@@ -57,7 +66,8 @@ describe('get-session-files', () => {
   });
 
   it('无日志文件时返回"无会话ID"', () => {
-    const result = runScript([tmpDir]);
+    // 传入 undefined 删除环境变量
+    const result = runScript([tmpDir], { CLAUDE_CODE_SESSION_ID: undefined });
     assert.equal(result.stdout, '无会话ID');
   });
 
