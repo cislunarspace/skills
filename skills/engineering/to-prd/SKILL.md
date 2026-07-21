@@ -6,25 +6,25 @@ disable-model-invocation: true
 
 # To PRD
 
-基于当前对话上下文和对代码库的理解，产出一份 PRD。不访谈用户，只整理已掌握的信息。
-
-issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 `docs/agents/triage-labels.md`。PRD 全文用项目的领域术语（见 `CONTEXT.md`），遵守相关区域的 ADR。
+从当前对话中提取需求信息，按 PRD 模板整理成结构化文档，经用户确认后发布到 issue tracker 并打上 ready-for-agent 标签。不主动访谈，只整理对话中已讨论的内容。
 
 ## 步骤
 
 ### 1. 探索代码库
 
-如果还没看过代码库，先探索一遍，理解当前状态。
+读 CONTEXT.md、相关 ADR，了解领域术语和架构约束。如果 PRD 涉及具体模块，浏览相关代码确认当前实现状态。
 
 ### 2. 确定测试切面
 
-测试要下钩子的地方，叫**测试切面**。一个切面就是一处能从外部观察行为、可以用测试驱动它的接口（HTTP 端点、CLI 命令、导出的函数等）。
-
-原则：**优先复用已有切面，而非新造；能用高层的，就不开低层的；切面越少越好，理想是一。** 高层切面（如端到端 HTTP 测试）能覆盖的，就别为它单独开单元测试切面。必须新切面时，选你能找到的最高位置，与用户确认。
+确认测试切面：优先复用已有切面（HTTP 端点、CLI 命令、导出函数等），能用高层的不开低层的。必须新增时选最高位置并与用户确认。
 
 ### 3. 写 PRD 并发布
 
-用下面的模板写 PRD，先把草稿展示给用户确认，再用 `gh issue create` 发布到 issue tracker，打上 `ready-for-agent` 标签（不需要额外分诊）。
+用下面的模板写 PRD。PRD 全文用项目领域术语（见 CONTEXT.md）、遵守相关 ADR。发布时按 docs/agents/issue-tracker.md 约定，使用 docs/agents/triage-labels.md 中的标签词汇。
+
+### Checkpoint
+
+PRD 草稿写完后必须停下，展示给用户确认。用户确认后再执行 `gh issue create` 发布到 issue tracker，打上 `ready-for-agent` 标签。
 
 <prd-template>
 
@@ -38,15 +38,7 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 
 ## 用户故事
 
-一份详尽的编号列表，每条格式：
-
-1. 作为\<角色\>，我想要\<功能\>，以便\<收益\>
-
-示例：
-
-1. 作为手机银行客户，我想要查看账户余额，以便更好地决定支出
-
-用户故事应当覆盖功能的各个方面，尽量详尽。
+编号列表，格式：作为<角色>，我想要<功能>，以便<收益>。覆盖功能各方面。
 
 ## 实现决策
 
@@ -60,9 +52,7 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 - API 契约
 - 具体交互
 
-不要写具体文件路径或代码片段，它们很快会过时。
-
-例外：如果原型产生了一段比文字更精确地编码了某个决策的代码（状态机、reducer、schema、类型形状），把它内联在相关决策处，注明来自原型。只保留决策密集的部分，不是一整个可运行的 demo。
+用概念和接口描述决策，不列文件路径。如有原型代码精确编码了决策（状态机、schema、类型），可内联决策密集部分并注明来自原型。
 
 ## 测试决策
 
@@ -81,6 +71,20 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 关于该功能的任何补充说明。
 
 </prd-template>
+
+## 边界情况
+
+| 情况 | 处理方式 |
+|---|---|
+| 对话中缺少核心需求信息 | 标出缺失部分，询问用户是继续写不完整的 PRD 还是补充讨论 |
+| CONTEXT.md 或相关 ADR 不存在 | 跳过领域术语检查，用对话中的术语 |
+| gh 未认证或无权限 | 将 PRD 内容展示给用户，提示手动创建 issue |
+
+## 完成条件
+
+- PRD 已通过 gh issue create 发布
+- issue 已打上 ready-for-agent 标签
+- issue URL 已展示给用户
 
 ## 下一步
 

@@ -1,14 +1,14 @@
 ---
 name: to-issues
-description: 把计划、规格或 PRD 拆成可独立认领的 issue，发布到项目 issue tracker，按垂直切片（tracer bullet）划分。当用户要求把计划拆成 issue、创建 issue 或发布到 issue tracker 时使用。
+description: 把计划、规格或 PRD 拆成可独立认领的 issue，发布到项目 issue tracker，按垂直切片（tracer bullet）划分。当用户说"拆 issue""创建 issue""发布到 tracker"或提供需要拆分的计划、规格、PRD 时使用。
 disable-model-invocation: true
 ---
 
 # To Issues
 
-把一份计划拆成若干可独立认领的 issue，每个 issue 是一条**垂直切片**：端到端打通一条窄但完整的功能路径（schema → API → UI → 测试），不是只动某一层的水平切片。这样的切片能独立演示、独立验收，按依赖顺序逐条推进。
+把一份计划拆成若干可独立认领的 issue，每个 issue 是一条**垂直切片**（tracer bullet）。垂直切片端到端打通一条窄但完整的功能路径（schema → API → UI → 测试），能独立演示和验收，不是只动某一层的水平切片。
 
-issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 `docs/agents/triage-labels.md`。issue 标题和描述用项目的领域术语（见 `CONTEXT.md`），遵守相关区域的 ADR。
+issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 `docs/agents/triage-labels.md`。issue 标题和描述用项目的领域术语（见 `CONTEXT.md`），遵守涉及区域的 ADR 决策。
 
 ## 步骤
 
@@ -18,14 +18,15 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 
 ### 2. 探索代码库（可选）
 
-如果还没探索过代码库，先探索一遍，理解当前代码状态。留意有没有**预重构**机会——先做一步重构让后续改动变容易，再做那步改动。预重构应当作为独立的切片最先完成。
+如果计划涉及现有代码改动，先探索代码库，理解当前状态。如果计划是新增功能、不涉及现有代码，可跳过此步。
+
+留意有没有**预重构**机会。预重构是指先做一步不改变行为的结构调整，让后续功能改动变容易。例如：抽取重复逻辑、统一数据访问层、调整模块边界。预重构应当作为独立的切片最先完成。
 
 ### 3. 起草垂直切片
 
-按上面的定义，把计划拆成 tracer bullet issue：
+按上面的定义，把计划拆成 tracer bullet issue。拆分时从最小可演示的路径开始：第一条切片应能端到端跑通最简场景（如单个字段的 CRUD），后续切片逐步添加复杂度（校验、权限、边界情况）。
 
-- 每条切片交付一条窄但完整的路径，穿过每一层（schema、API、UI、测试）
-- 完成的切片可以独立演示或验证
+检查标准：每条切片完成后能否独立演示给用户看。
 
 ### 4. 与用户确认
 
@@ -41,11 +42,9 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 - 依赖关系是否正确？
 - 有没有切片该合并或进一步拆分？
 
-反复迭代，直到用户批准。
-
 ### 5. 发布 issue
 
-按依赖顺序发布（阻塞方先发），这样能在"阻塞于"字段里引用真实的 issue 编号。对每条批准的切片，用 `gh issue create` 创建新 issue，正文用下面的模板，打上 `ready-for-agent` 标签。
+按依赖顺序发布，被依赖的切片先发，这样后续切片的"阻塞于"字段可以引用真实的 issue 编号。对每条批准的切片，用 `gh issue create` 创建新 issue，正文用下面的模板，打上 `ready-for-agent` 标签。
 
 <issue-template>
 
@@ -57,7 +56,7 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 
 这条垂直切片的简要描述。描述端到端行为，不是逐层实现。
 
-避免具体文件路径或代码片段，它们很快会过时。例外：如果原型产生了一段比文字更精确地编码了某个决策的代码（状态机、reducer、schema、类型形状），把它内联在这里，注明来自原型。只保留决策密集的部分，不是一整个可运行的 demo。
+避免具体文件路径或代码片段，它们很快会过时。例外：如果原型产生了一段比文字更精确地编码了某个决策的代码（状态机、reducer、schema、类型形状），把它内联在这里，注明来自原型。
 
 ## 验收标准
 
@@ -75,6 +74,17 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 
 不要关闭或修改任何父 issue。
 
+## Checkpoint
+
+- **步骤 4 → 步骤 5**：必须等用户批准拆分方案后才能进入步骤 5。反复迭代直到用户明确同意。
+- **步骤 5 开始前**：创建 issue 是不可逆操作，在开始批量创建前再次确认用户已批准。
+
+## 边界情况
+
+- **gh 未登录**：执行 `gh auth status` 检查认证状态。如未认证，提示用户先运行 `gh auth login`。
+- **创建单个 issue 失败**：记录失败的切片（标题和错误信息），继续创建剩余 issue，不中断整个批次。
+- **所有 issue 创建完成后**：汇报成功创建的 issue 数量及编号，以及失败的数量、标题和原因。
+
 ## 下一步
 
-- issue 拆完：给每条标状态、写 brief 用 `/triage`
+- issue 拆完后用 `/triage` 给每条 issue 标注 triage 状态、撰写 agent brief

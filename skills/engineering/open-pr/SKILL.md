@@ -16,18 +16,17 @@ disable-model-invocation: true
 - 若用户传 `<branch-name>` 作为参数，用它
 - 否则用 `git rev-parse --abbrev-ref HEAD` 读当前分支
 - 若当前在默认分支（`master` / `main`），停下来告诉用户"需要先在分支上工作"，让用户开新分支或传分支名
-- 若分支已在远端跟踪（`git rev-parse --abbrev-ref --symbolic-full-name @{u}` 成功），跳过 push，直接进 step 3 开 PR
+- 若分支已在远端跟踪（`git rev-parse --abbrev-ref --symbolic-full-name @{u}` 成功），跳过 step 3，直接进 step 4 开 PR
 
 ### 2. 提示先 review
 
-**不在 skill 内调 `/code-review`**——把它推荐给用户，**等用户决定**。
+**不在 skill 内调 `/code-review`**——把它推荐给用户，打印建议后直接继续进 step 3。
 
 打印：
 
 ```
 建议先运行 /code-review <branch> 评审，再开 PR。
-- 跳过：直接进 step 3
-- 跑过了：直接进 step 3
+现在继续 push 分支。
 ```
 
 ### 3. Push 分支
@@ -35,9 +34,6 @@ disable-model-invocation: true
 ```bash
 git push origin <branch>
 ```
-
-- 第一次 push：新分支自动设 upstream
-- 后续 push：仅 push 新 commit
 
 ### 4. 开 PR
 
@@ -47,7 +43,7 @@ git push origin <branch>
 git remote show origin | grep "HEAD branch"
 ```
 
-默认用 master（按本仓库约定）。
+若查询失败，回退到 master。
 
 #### 4b. 找关联 issue
 
@@ -59,29 +55,17 @@ git log <base>..<branch> --pretty=%s
 
 #### 4c. 起草 PR body
 
-按以下结构（可用 `gh pr create --fill` 自动填充，或手工写）：
-
-```markdown
-## 关联
-Closes #<N> （若 commit 含 `#N`）
-
-## 改了什么
-- <要点 1>
-- <要点 2>
-
-## 测试
-- <命令 + 结果>
-```
+包含三段：关联（Closes #N 或无）、改了什么（要点列表）、测试（命令与结果）。可用 `gh pr create --fill` 自动填充，或手工写。
 
 #### 4d. 开 PR
 
 ```bash
 gh pr create --base <base> --head <branch> \
-  --title "<branch 第一条 commit message 提炼>" \
+  --title "<从 git log <base>..<branch> 提取第一条 commit message 作为标题>" \
   --body "<上面 body>"
 ```
 
-打印 PR URL，等用户确认下一步。
+打印 PR URL。
 
 ### 5. 合并
 
@@ -99,11 +83,11 @@ PR 已开：<url>
 按用户选择执行：
 
 ```bash
-gh pr merge <PR-number> --squash
+gh pr merge <PR-number> --squash --delete-branch
 # 或
-gh pr merge <PR-number> --merge
+gh pr merge <PR-number> --merge --delete-branch
 # 或
-gh pr merge <PR-number> --rebase
+gh pr merge <PR-number> --rebase --delete-branch
 ```
 
 ### 6. 清理
@@ -115,8 +99,8 @@ gh pr merge <PR-number> --rebase
 git checkout <base>
 git pull origin <base>
 
-# 删远端分支（merge 时已自动删，但保险再跑一次）
-git push origin --delete <branch>
+# 删远端分支（若 merge 命令未加 --delete-branch）
+git push origin --delete <branch> 2>/dev/null || true
 
 # 删本地分支
 git branch -d <branch>
@@ -126,7 +110,7 @@ git worktree remove <worktree-path> 2>/dev/null || true
 git worktree prune
 ```
 
-`worktree-path` 通过 `git worktree list | grep <branch>` 推断。
+`worktree-path` 通过 `git worktree list` 查找包含 `<branch>` 的行，提取第一列作为路径。
 
 ## 边界情况
 
@@ -137,15 +121,13 @@ git worktree prune
 | `gh` CLI 未登录 | 提示用户运行 `gh auth login` 后重试 |
 | PR 合并时检测到冲突 | 停下来，让用户先在另一个会话跑 `/resolving-merge-conflicts` |
 | 仓库无 GitHub remote（gitlab / 本地） | 停下来，告诉用户该 skill 只支持 GitHub flow |
-| 用户传了 worktree 路径作为额外参数 | 在 step 6 优先用此路径 |
 | PR 描述里没有关联 issue（commit message 不含 `#N`） | body 段"关联"写"无关联 issue"，继续 |
-| `--rebase` 模式下 base 已被快进 | gh pr merge 退化为 `--merge`，告知用户 |
 
 ## Checkpoint
 
-**必须停下来等用户的三处：**
+**必须停下来等用户的两处：**
 
-- step 2：用户是否要先跑 `/code-review`
+- step 2：打印建议后直接继续（不等用户响应）
 - step 5：merge 模式选择（squash / merge / rebase）
 
 **自己做完再汇报的两处：**
