@@ -38,6 +38,27 @@ export const meta = {
 // 在这里写编排：phase、agent、parallel、pipeline
 ```
 
+### prompt 构造规则
+
+`agent()` 的第一个参数**必须是字符串**。任务从来源拆出后通常表示为对象（含 title、files、work、criteria 等字段），构造 prompt 时要把字段**逐个提取**拼成字符串，**不要**把对象整体传入或在模板字面量中引用对象变量——JS 隐式 toString 会产生 `[object Object]`，子代理收到的就不是任务内容了。
+
+```js
+// ✅ 正确：逐字段提取拼成字符串
+const prompt = [
+  `标题: ${task.title}`,
+  `文件: ${task.files.join(', ')}`,
+  `工作内容: ${task.work}`,
+  `验收标准: ${task.criteria}`,
+].join('\n')
+await agent(prompt, opts)
+
+// ❌ 错误：对象整体传入 → 子代理收到 "[object Object]"
+await agent(task, opts)
+
+// ❌ 错误：模板字面量引用对象 → 子代理收到 "执行: [object Object]"
+await agent(`执行: ${task}`, opts)
+```
+
 详细原语见 Claude Code harness 文档。
 
 ## 失败处理
