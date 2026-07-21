@@ -14,3 +14,8 @@ description: 解决进行中的 git merge/rebase 冲突。当用户遇到 merge 
 4. **跑项目的自动化检查**。通常是 typecheck，再测试，再格式化。修掉 merge 弄坏的地方。
 
 5. **收尾**。stage 全部改动并提交。如果是 rebase，继续推进，直到所有 commit 都 rebase 完成。
+
+## 下一步
+
+- 冲突解决完：再跑一次 `/code-review` 确认合并后的改动合理
+- 合并后改动通过 review：提交用 `/git-commit`

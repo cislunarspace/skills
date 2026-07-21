@@ -96,3 +96,7 @@ gh issue close <N> --comment "已在 [<commit-sha>](<commit-url>) 中完成"
 | 会话日志里出现新的未跟踪文件 | 自动包含进来 |
 | issue 编号在 GitHub 上不存在 | 静默跳过 |
 | 所有关联 issue 已关闭 | 跳过步骤 4 |
+
+## 下一步
+
+- 提交到分支后：把分支推到远端并合并到默认分支用 `/open-pr`

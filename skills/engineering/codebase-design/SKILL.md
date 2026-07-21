@@ -112,3 +112,8 @@ description: 设计和改进代码库时用的一套共享词汇——围绕"深
 
 - **给定依赖后深化一个模块簇** —— 见 [references/DEEPENING.md](references/DEEPENING.md)：依赖分类、接缝纪律、"替换而非叠加"的测试策略。
 - **探索多个候选接口** —— 见 [references/DESIGN-IT-TWICE.md](references/DESIGN-IT-TWICE.md)：起几个并行子 agent，用截然不同的方式设计同一个接口，再从深度、局部性、接缝位置上对比。
+
+## 下一步
+
+- 设计落定要写代码：落代码用 `/implement`
+- 设计方案想再压一压：跑 `/grilling`

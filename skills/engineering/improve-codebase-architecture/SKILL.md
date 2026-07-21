@@ -70,3 +70,8 @@ disable-model-invocation: true
 ### 3. 发布为 issue
 
 用户选定发现项后，运行 `/to-issues` 技能，把每个选中的发现项作为一条 issue 发布到项目 issue tracker。每条 issue 写清涉及的位置、当前问题、改进建议，以及触发的准则 / 透镜。
+
+## 下一步
+
+- 报告里挑出一项：直接修用 `/implement`
+- 报告里挑出多项：拆成 issue 列表用 `/to-issues`

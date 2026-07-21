@@ -132,3 +132,8 @@ description: 难调的 bug 和性能回归的诊断流程。当用户说"diagnos
 - [ ] 最终被验证为对的那条假设，写进了 commit / PR message——让下一个调它的人有得学
 
 **然后问一句：什么本可以预防这个 bug？** 如果答案涉及架构改动（没有好的测试切面、调用方纠缠、隐藏的耦合），把具体情况交给 `/improve-codebase-architecture` skill。在修复**落地之后**再给这个建议，不是之前——你现在的信息比开工时多。
+
+## 下一步
+
+- 修复改动想审一遍：用 `/code-review`
+- 发现是架构层面（缺测试切面、调用方纠缠、隐藏耦合）：扫一遍架构用 `/improve-codebase-architecture`

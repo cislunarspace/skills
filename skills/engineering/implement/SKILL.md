@@ -12,3 +12,9 @@ disable-model-invocation: true
 - 定期跑类型检查和单个测试文件；全部写完后跑一遍完整测试套件。
 - 完成后用 `/code-review` 审查本次改动。
 - 把工作提交到当前分支。
+
+## 下一步
+
+- 写代码的过程里：按测试先行的方式推进用 `/tdd`
+- 写完一段改动：审一遍用 `/code-review`
+- 改动通过 review：提交用 `/git-commit`

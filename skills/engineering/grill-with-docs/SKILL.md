@@ -7,3 +7,8 @@ disable-model-invocation: true
 # Grill with Docs
 
 发起一轮 `/grilling` 会话，过程中使用 `/domain-modeling` 技能维护领域模型。
+
+## 下一步
+
+- 追问结束、ADR 与术语表都写好：落代码用 `/implement`
+- 产出要变成 PRD：写 PRD 用 `/to-prd`

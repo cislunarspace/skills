@@ -69,3 +69,8 @@ cd ~/codes/MinerU && uv run mineru -p <pdf 绝对路径> -o ./.mineru-out/<pdf-s
 
 - `./.mineru-out/<pdf-stem>/` 下产出 markdown
 - agent 已读到 markdown 内容并基于它继续后续工作
+
+## 下一步
+
+- PDF 内容要继续深入调研：派后台子代理用 `/research`
+- PDF 内容要变成产品需求：综合成 PRD 用 `/to-prd`

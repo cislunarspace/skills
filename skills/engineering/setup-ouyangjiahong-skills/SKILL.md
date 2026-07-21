@@ -125,3 +125,7 @@ disable-model-invocation: true
 ### 5. 完成
 
 告诉用户配置完成，哪些工程技能会读取这些文件。告知以后可以直接编辑 `docs/agents/*.md`，只有想更换 issue tracker 或从头重来时，才需要重跑本技能。
+
+## 下一步
+
+- 仓库首次配置完成：开始处理 issue 用 `/triage`

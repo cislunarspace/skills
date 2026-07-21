@@ -74,3 +74,7 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 </issue-template>
 
 不要关闭或修改任何父 issue。
+
+## 下一步
+
+- issue 拆完：给每条标状态、写 brief 用 `/triage`

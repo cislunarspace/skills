@@ -81,3 +81,8 @@ issue tracker 约定见 `docs/agents/issue-tracker.md`，triage label 词汇见 
 关于该功能的任何补充说明。
 
 </prd-template>
+
+## 下一步
+
+- PRD 写完：拆成可执行的 issue 用 `/to-issues`
+- PRD 自己还想再压一压：跑 `/grilling`
