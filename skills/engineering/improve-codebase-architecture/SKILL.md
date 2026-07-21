@@ -23,7 +23,9 @@ disable-model-invocation: true
 - `AGENTS.md`、`CLAUDE.md`：项目声明的目录结构，以及编码准则（尤其“编码准则”一节）。
 - `CONTEXT.md`、`docs/adr/`：领域语言与已定的架构决策。检查时不要重新争议 ADR；与 ADR 冲突的发现项，只有摩擦真实到值得重开时才摆出来，并清楚标注。
 
-然后用 Agent 工具（`subagent_type=Explore`）走查代码库，带着下面两个维度的透镜，记下你感到摩擦的地方。每条是透镜，不是清单——项目没踩到的坑别硬凑。
+然后派两个子代理并行走查两个维度——一个走查"目录组织"、一个走查"文件内部设计"，带着下面两组透镜，记下感到摩擦的地方。每条是透镜，不是清单——项目没踩到的坑别硬凑。
+
+具体怎么派子代理（工具名、是否支持并发、ultracode 等价模式）因 harness 而异——见末尾"多 harness 适配"。
 
 #### 透镜一：目录组织
 
@@ -70,6 +72,17 @@ disable-model-invocation: true
 ### 3. 发布为 issue
 
 用户选定发现项后，运行 `/to-issues` 技能，把每个选中的发现项作为一条 issue 发布到项目 issue tracker。每条 issue 写清涉及的位置、当前问题、改进建议，以及触发的准则 / 透镜。
+
+## 多 harness 适配
+
+第 1 步的抽象行为（并行走查两个维度、汇总后写报告）在所有 harness 都一样。**具体怎么派子代理**因 harness 而异，按当前运行的 harness 读对应文件：
+
+- [Claude Code（含 ultracode 模式）](references/harness-claude-code.md)
+- [Kimi Code](references/harness-kimi-code.md)
+- [mimo code](references/harness-mimo-code.md)
+- [zcode](references/harness-zcode.md)
+
+第 2 步写 HTML 报告、第 3 步调 `/to-issues` 的工具用法不依赖特定子代理类型，按上面 SKILL.md 走即可。
 
 ## 下一步
 
