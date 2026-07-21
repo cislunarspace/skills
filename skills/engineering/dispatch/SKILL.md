@@ -47,11 +47,13 @@ Level 2（等待全部）：验证
 
 ### 3. 扇出执行
 
-逐层用 `AgentSwarm` 发射子代理：
+逐层并发派子代理。**抽象行为**：
 
-- `subagent_type` 用 `"coder"`
-- 不要设 `run_in_background`
-- 每个子代理只拿到自己的任务切片，不要给完整计划
+- 每层内部，所有无依赖的任务**同时**派出去；任何 harness 都要并行而非串行
+- 每个子代理只拿到自己的任务切片（要改的文件、做什么、验收标准），不要把完整调度计划塞给它
+- 子代理的产出是该任务的修改/汇报，dispatch 收齐再进下一层
+
+具体怎么调子代理、怎么并发，每个 harness 不同——见末尾"多 harness 适配"。
 
 每层执行完，逐个检查结果：
 
@@ -79,3 +81,12 @@ Level 2（等待全部）：验证
 | 单个任务失败 | 问用户：重试 / 跳过 / 中止 |
 | 所有任务互相独立 | 全部放到同一层并行，跳过层级编排 |
 | 不知道测试命令 | 问用户用什么命令跑测试 |
+
+## 多 harness 适配
+
+dispatch 的抽象行为（按依赖分层、并行派子代理、层间推进、验证收尾）在所有 harness 都一样。**具体怎么调子代理**因 harness 而异，按当前运行的 harness 读对应文件：
+
+- [Claude Code（含 ultracode 模式）](./references/harness-claude-code.md)
+- [Kimi Code](./references/harness-kimi-code.md)
+- [mimo code](./references/harness-mimo-code.md)（预留，待补）
+- [zcode](./references/harness-zcode.md)（预留，待补）
