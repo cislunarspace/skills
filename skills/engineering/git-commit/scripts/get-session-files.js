@@ -438,21 +438,25 @@ function main() {
         }
       }
     }
-  }
 
-  // Kimi Code 路径：只有 Claude Code 没找到文件时才走这里。
-  if (files.size === 0) {
-    const kimiWires = findKimiWires(root);
-    if (kimiWires.length > 0) {
-      foundSource = true;
-      for (const filePath of collectKimiFiles(kimiWires, root)) {
-        files.add(filePath);
+    // Kimi Code 路径：只有 Claude Code 没找到文件时才走这里。
+    if (files.size === 0) {
+      const kimiWires = findKimiWires(root);
+      if (kimiWires.length > 0) {
+        foundSource = true;
+        for (const filePath of collectKimiFiles(kimiWires, root)) {
+          files.add(filePath);
+        }
       }
     }
-  }
 
-  if (!foundSource) {
-    console.log(claudeSessionId ? '无日志' : '无会话ID');
+    if (!foundSource) {
+      console.log('无日志');
+      return;
+    }
+  } else {
+    // 没有 CLAUDE_CODE_SESSION_ID，直接返回"无会话ID"
+    console.log('无会话ID');
     return;
   }
 

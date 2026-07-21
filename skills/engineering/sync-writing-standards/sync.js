@@ -2,7 +2,6 @@
 'use strict';
 
 // sync.js — 把 references/standards.md 三节注入目标仓库 CLAUDE.md / AGENTS.md。
-// 单一入口：agent 只跑本脚本，不自己解析 markdown、不手动 Edit、不自己跑 od/sed。
 //
 // 用法: node sync.js [目标仓库根目录]
 //   不传参默认 process.cwd()。
@@ -28,7 +27,6 @@ function die(msg) {
 
 // ---- 行尾处理 ----
 
-// 把任意 CR / CRLF 全部归一为 LF。
 function normalizeLF(content) {
   return content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 }
@@ -50,8 +48,7 @@ function countCR(filePath) {
   return n;
 }
 
-// 只剥文件末尾的空白行（与原 bash `sed -e :a -e '/^[[:space:]]*$/{$d;N;ba}'` 等价）。
-// 不会动非空行末尾的空格，对应原承诺："三节之外内容字节不动（LF 归一化除外）"。
+// 剥掉文件末尾的空白行，保留非空行末尾的空格。
 function stripTrailingBlankLines(content) {
   const lines = content.split('\n');
   while (lines.length > 0 && /^\s*$/.test(lines[lines.length - 1])) {
@@ -60,10 +57,10 @@ function stripTrailingBlankLines(content) {
   return lines.join('\n');
 }
 
-// ---- Section 抽取 ----
+// ---- 段落抽取 ----
 
 // 从文本里抽一段 `## TITLE` 节：起于匹配行，止于下一个 `## ` 行或独立 `---` 行；
-// 再去掉尾部空行。返回值不含尾随换行，对应原 bash 的 awk + sed 组合。
+// 再去掉尾部空行。返回值不含尾随换行。
 function extractSection(content, title) {
   const lines = content.split('\n');
   const header = `## ${title}`;
@@ -96,7 +93,7 @@ function extractSection(content, title) {
 
 // 把 newSection（已含 `## TITLE` 起始行，且无尾随空行）注入 content：
 //   - 若 `## TITLE` 已存在：从该行起，到下一个 `## ` / 独立 `---` 之前替换；
-//     与下一段间补一个空行（对应原 bash awk 在边界处的 `printf "\n"`）。
+//     与下一段间补一个空行。
 //   - 若不存在：去掉尾部空白行后追加，恰好一个空行分隔；
 //     空文件则只写 `newSection\n`。
 function injectSection(content, title, newSection) {
@@ -105,7 +102,6 @@ function injectSection(content, title, newSection) {
   const existingIdx = lines.indexOf(header);
 
   if (existingIdx === -1) {
-    // 只剥末尾空白行；非空行末尾空格保留，对齐原 bash 的 sed 行为。
     const trimmed = stripTrailingBlankLines(content);
     if (trimmed === '') return newSection + '\n';
     return trimmed + '\n\n' + newSection + '\n';
@@ -123,19 +119,17 @@ function injectSection(content, title, newSection) {
   const before = lines.slice(0, existingIdx);
   const after = lines.slice(endIdx);
 
-  // 若替换后还有 `## ` / `---` 紧随其后，补一个空行，与原 awk 边界行为一致。
+  // 确保节末有换行，保证幂等性。
   if (after.length > 0 && newLines[newLines.length - 1] !== '') {
     newLines.push('');
   }
 
-  // 原 bash 的 `printf "%s\n"` 总在节末追加换行；Node 这边要显式补上，
-  // 否则替换最后一节时尾部换行会丢，二次运行就不幂等。
   let result = [...before, ...newLines, ...after].join('\n');
   if (!result.endsWith('\n')) result += '\n';
   return result;
 }
 
-// 确保第一行是预期的 `# NAME` H1：已有 `# ...` 则替换为首行；否则插入标题 + 空行。
+// 确保第一行是预期的 `# NAME` H1：已有 H1 标题则替换内容；否则在开头插入标题和空行。
 function ensureH1(content, expected) {
   const lines = content.split('\n');
   if (lines[0] === expected) return content;
@@ -149,12 +143,11 @@ function ensureH1(content, expected) {
 // ---- 流程 ----
 
 function run() {
-  // SKILL_DIR 默认取脚本所在目录；测试可通过环境变量覆盖。
   const skillDir = process.env.SKILL_DIR || path.dirname(__filename);
   const targetDir = process.argv[2] || process.cwd();
   const standardsPath = path.join(skillDir, 'references', 'standards.md');
 
-  // standards.md 必须存在且是普通文件（对齐 bash 的 `[ -f "$STANDARDS" ]`）。
+  // standards.md 必须存在且是普通文件。
   const standardsStat = fs.statSync(standardsPath, { throwIfNoEntry: false });
   if (!standardsStat) {
     die(`缺少 ${standardsPath}`);
@@ -163,7 +156,7 @@ function run() {
     die(`${standardsPath} 不是普通文件`);
   }
 
-  // 目标必须是已存在的目录（bash 的 `[ -d "$TARGET_DIR" ]`）。
+  // 目标必须是已存在的目录。
   const targetStat = fs.statSync(targetDir, { throwIfNoEntry: false });
   if (!targetStat) {
     die(`目标目录不存在: ${targetDir}`);
