@@ -27,7 +27,11 @@
         "./skills/engineering/prototype",
         "./skills/engineering/wayfinder",
         "./skills/engineering/research",
-        "./skills/engineering/teach"
+        "./skills/engineering/teach",
+        "./skills/engineering/batch-grill-me",
+        "./skills/engineering/loop-me",
+        "./skills/engineering/to-questionnaire",
+        "./skills/engineering/setup-ts-deep-modules"
       ]
     },
     {
