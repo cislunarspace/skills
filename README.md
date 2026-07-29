@@ -8,7 +8,7 @@
 
 ## 写作要求的来历
 
-[`sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md) 注入的"写作要求"一节，提炼自《毛泽东年谱》中毛泽东关于写作的论述。比如 1955 年他提醒："写文章不要用过于夸大的修饰词，反而减损了力量……废话应当尽量除去。"又如他评价文件的标准：逻辑性、准确性、鲜明性，要使人读得下去、读后脑中有印象。
+[`sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md) 注入的"写作要求"一节，提炼自《毛泽东年谱》中毛泽东关于写作的论述。比如 1955 年他提醒："关于写文章，请注意不要用过于夸大的修饰词，反而减损了力量……废话应当尽量除去。"又如他评价文件的标准：逻辑性、准确性、鲜明性，要使人读得下去、读后脑中有印象。
 
 这个仓库的文档，包括这份 README，也按这些要求写。
 
@@ -119,4 +119,4 @@ scripts/                         # 辅助脚本
 npm test
 ```
 
-一条命令聚合跑仓库里所有测试（Node 的 `node:test` 和 bash 测试都有）。改任何 skill 之前和之后都跑一遍。
+用 Node 内置的 `node:test` 跑 `skills/` 下所有 `.test.js`。改任何 skill 之前和之后都跑一遍。
