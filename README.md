@@ -4,7 +4,7 @@
 
 一套给 Claude Code、Kimi Code 等 Agent 编码工具用的 skills，小、可组合，基于日常工程习惯。
 
-当前包含 33 个 skill，持续迭代中。
+当前包含 37 个 skill，持续迭代中。
 
 ## 写作要求的来历
 
@@ -26,7 +26,7 @@ Skills 按目录分组，安装时可以选择：
 
 | 分组 | 说明 | Skills 数量 |
 |------|------|-------------|
-| **engineering** | 工程相关：计划讨论、规范注入、仓库配置、任务调度、Git 提交、代码审查、调试、TDD 等 | 25 |
+| **engineering** | 工程相关：计划讨论、规范注入、仓库配置、任务调度、Git 提交、代码审查、调试、TDD 等 | 29 |
 | **research** | 研究相关：研究规划、问题界定、资料收集、资料分析、论证构建、报告撰写、视觉呈现、研究伦理 | 8 |
 
 ## 日常使用
@@ -72,6 +72,10 @@ Skills 按目录分组，安装时可以选择：
 | [codebase-design](./skills/engineering/codebase-design/SKILL.md) | "深模块"共享词汇：设计接口、找深化机会、定接缝位置 | `codebase-design`、`深模块` |
 | [write-skill](./skills/engineering/write-skill/SKILL.md) | 按仓库规范编写或审查 SKILL.md | `write-skill`、`写 skill` |
 | [teach](./skills/engineering/teach/SKILL.md) | 在工作区内教用户一项新技能或概念，跨多次会话推进 | `teach`、`教我`、`带我学` |
+| [batch-grill-me](./skills/engineering/batch-grill-me/SKILL.md) | 批量追问模式：一轮问完所有前沿问题，逐轮推进直到达成共识 | `batch-grill-me` |
+| [loop-me](./skills/engineering/loop-me/SKILL.md) | 把生活中重复出现的工作流讨论成 workflow 规格 | `loop-me` |
+| [setup-ts-deep-modules](./skills/engineering/setup-ts-deep-modules/SKILL.md) | 在 TS 仓库用 dependency-cruiser 强制深模块边界 | `setup-ts-deep-modules` |
+| [to-questionnaire](./skills/engineering/to-questionnaire/SKILL.md) | 把答不了的决策变成问卷发给别人，异步收集信息 | `to-questionnaire`、`问卷` |
 
 ### Research
 
