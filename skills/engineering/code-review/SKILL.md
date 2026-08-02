@@ -92,6 +92,7 @@ description: 审查 HEAD 与指定固定点间的 diff，分规范（是否遵�
 | diff 为空 | 告知用户无改动需审查，停止 |
 | 找不到规格 | 询问用户规格位置或跳过规格轴 |
 | 子代理执行失败 | 报错并附执行日志 |
+| 用户要求审查架构设计而非代码 diff | 不用 code-review，引导到 `/improve-codebase-architecture` |
 
 ## Checkpoint
 
