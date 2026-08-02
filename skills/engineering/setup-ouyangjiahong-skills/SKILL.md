@@ -65,12 +65,28 @@ disable-model-invocation: true
 - **单一上下文**：仓库根目录一份 `CONTEXT.md` + `docs/adr/`。多数仓库如此。
 - **多上下文**：根目录有 `CONTEXT-MAP.md`，指向各上下文的 `CONTEXT.md`（通常是 monorepo）。
 
+**D 节（Loop Engineering）。**
+
+> 解释：`loop-go` 循环运行 builder（写/修代码）和 checker（跑全部检查）两个 agent，直到检查通过。它的三个定义文件必须存在才能工作。本节能把三件套装进仓库的 `.claude/` 下，让 `/loop-go` 直接可用，也让仓库对任何打开它的人自包含。
+
+现状检查：
+
+- `.claude/agents/builder.md`、`.claude/agents/checker.md` 是否已存在
+- `.claude/commands/loop-go.md` 是否已存在
+- `~/.claude/agents/` 是否已有同名 builder / checker 文件
+
+一次一个决定：
+
+- **安装 Loop 三件套**：是 / 否（默认：是）。是则把 builder、checker 写进 `.claude/agents/`，命令写进 `.claude/commands/loop-go.md`，停止规则追加到根文档。否则跳过本节。
+- **已有同名文件时**：覆盖 / 保留（默认询问用户，绝不静默覆盖）。若 `~/.claude/agents/` 已有同名 agent，说明项目级副本会覆盖它（项目内生效），问用户是否仍要写入。
+
 ### 3. 确认并编辑
 
 向用户展示以下草稿：
 
 - 要加入 `CLAUDE.md` 或 `AGENTS.md` 的 `## Agent skills` 段落（选择规则见步骤 4）
 - `docs/agents/issue-tracker.md`、`docs/agents/triage-labels.md`、`docs/agents/domain.md` 的内容
+- 若选了安装 Loop 三件套：`.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md` 三个文件的内容，以及要追加到根文档的 `### Loop Engineering` 指针和 `## Loop 停止规则` 段
 
 让用户在写入前编辑。
 
@@ -114,10 +130,24 @@ disable-model-invocation: true
 
 对于"其他"issue tracker，根据用户描述从零写 `docs/agents/issue-tracker.md`。
 
+**若选了安装 Loop 三件套：**
+
+1. 若 `.claude/agents/`、`.claude/commands/` 不存在，先创建目录。
+2. 用本技能目录下的种子模板写三个文件：
+   - `.claude/agents/builder.md` ← [`builder.md`](./references/builder.md)
+   - `.claude/agents/checker.md` ← [`checker.md`](./references/checker.md)
+   - `.claude/commands/loop-go.md` ← [`loop-go-command.md`](./references/loop-go-command.md)
+3. 在步骤 4 开头选出的根文档（`CLAUDE.md` 或 `AGENTS.md`）里：
+   - 若已有 `## Agent skills` 段落，在段内加 `### Loop Engineering`（一句话概述 + 指向三个 `.claude/` 文件），不要追加重复段落。
+   - 追加或替换顶层 `## Loop 停止规则` 段，内容来自 [`loop-stop-rules.md`](./references/loop-stop-rules.md)。已有同段时替换，不重复追加。
+
 ### 5. 完成
 
 告诉用户配置完成，哪些工程技能会读取这些文件。告知以后可以直接编辑 `docs/agents/*.md`，只有想更换 issue tracker 或从头重来时，才需要重跑本技能。
 
+若安装了 Loop 三件套，告知三件套已就位，直接 `/loop-go <任务>` 可用；解释项目级 `.claude/agents/` 会覆盖用户级同名 agent（若全局已有）。
+
 ## 下一步
 
 - 仓库首次配置完成：开始处理 issue 用 `/triage`
+- 装了 Loop 三件套：实现任务用 `/loop-go`
