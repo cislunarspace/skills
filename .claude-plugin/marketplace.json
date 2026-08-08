@@ -29,6 +29,7 @@
       "skills": [
         "./skills/productivity/grilling",
         "./skills/productivity/handoff",
+        "./skills/productivity/open-pr",
         "./skills/productivity/teach",
         "./skills/productivity/to-questionnaire"
       ]
