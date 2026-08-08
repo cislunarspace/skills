@@ -1,88 +1,56 @@
 ---
 name: loop-go
-description: 循环运行 builder 和 checker 两个 agent，直到所有检查通过。当用户输入 /loop-go 并给出任务，或说"循环构建直到通过"、"loop until green"时使用。
+description: /loop-go：循环派 builder 写代码、checker 跑检查直到全绿。说 "/loop-go <任务>" 或 "loop until green" 时使用。
 argument-hint: "<任务：目标 + 验收标准>，如 '实现登录页并让所有检查通过'"
 disable-model-invocation: true
 ---
 
 # Loop Go
 
-循环运行 builder（写/修代码）和 checker（跑全部检查）两个 agent，直到所有检查通过或循环按停止规则终止。
+循环派 builder 写/修代码，checker 跑检查，直到全绿或停止规则命中。
 
-## 核心行为
+## 前置条件
 
-1. 把任务写成一行简报：目标、涉及文件、完成标准。
-2. 派 builder 实现或修复。
-3. 派 checker 运行所有检查。
-4. 全绿就停；有失败就把失败报告原样交给 builder，再来一轮。
-5. 最多 5 轮。
+builder 和 checker 由 `/setup-ouyangjiahong-skills` 定义。未加载时停步，提示切回主分支重跑 setup。
 
-任务内容 = `/loop-go` 后传入的参数。参数为空时，从会话上下文取最近的计划、issue 或失败报告，先与用户确认任务目标和验收标准。
-
-## 依赖
-
-本技能不包含 builder 和 checker 的定义。它们由 `/setup-ouyangjiahong-skills`（D 节）安装到 `~/.claude/agents/`（用户级）或当前仓库 `.claude/agents/`（项目级，随仓库提交）。两者都会被加载，同名时项目级优先。
-
-当前环境没有这两个 agent 时，停下，提示先跑 `/setup-ouyangjiahong-skills`，不要凭空构造子代理。
+`.claude/` 不在 git 中——worktree 不会带 builder/checker。回到主工作目录跑 `/setup-ouyangjiahong-skills`，worktree 共享主仓库的 `.claude/agents/`。
 
 ## 步骤
 
 ### 0. 对齐目标
 
-把任务写成一行简报：目标、涉及文件、完成标准。没有完成标准就先问用户。简报传给 builder 和 checker，确保三者对齐。
+把任务写成简报：目标、涉及文件、完成标准。没写完成标准就先问。同一份简报贯穿所有轮次。
 
 ### 1. 派 builder
 
-用 Task 工具，`subagent_type: "builder"`，prompt 只放这一轮简报（实现任务或修复上一轮失败）。同步等结果（不要用 `run_in_background`），等它带回改动。调子代理时 prompt 只放任务内容，不塞完整调度计划。
+用 Task 工具，`subagent_type: "builder"`，prompt 只放简报和本轮任务。等 builder 完成、拿到改动文件清单再往下。
 
 ### 2. 派 checker
 
-用 Task 工具，`subagent_type: "checker"`，prompt 放同一份简报，要求跑全部检查并回报。等它带回报告。
+用 Task 工具，`subagent_type: "checker"`，prompt 放同一份简报。等 checker 完成、拿到检查结果报告再往下。
+
+报失败但无明细时让 checker 重跑，输出真实错误行。
 
 ### 3. 判定
 
-- checker 报 ALL GREEN：停止，展示 diff 和检查结果。
-- checker 报 FAILED：把完整失败报告原样转发给 builder，回到步骤 1。不要自己解读或过滤——builder 需要原始错误信息定位根因。
-- 无有效报告：按边界情况表处理。
+- 全绿：展示 diff 和检查结果。
+- 失败：把 checker 完整报告交给 builder，回到步骤 1。原始错误是 builder 定位根因的唯一线索。
+- checker 找不到检查命令：停步，问用户项目实际用的检查命令。
+- checker 超时或输出无法解析：按停止规则 6 终止。
 
-## 轮次管理
+## 轮次
 
-- 最多 5 轮。每轮开始时公开声明 `Cycle N/5`。
-- 同一失败连续出现两次：停止。builder 可能在瞎猜，不是在修复。
-- 修复导致之前通过的检查失败：停止。在拆东墙补西墙。
+每轮开始声明 `Cycle N/5`。最多 5 轮。
 
-## 停止规则
+以下任一情况立即停止：
 
-循环在以下任一情况停止：
+1. 全绿
+2. 同一失败连续两轮出现（builder 在瞎猜，不是在修）
+3. 修复引入回归——之前通过的检查失败（在拆东墙补西墙）
+4. 第 5 轮仍未全绿——展示末轮改动和失败项
+5. builder 违反红线：弱化测试、删除/注释/跳过失败检查、不跑检查就声称已修复
+6. checker 无法产出有效报告：找不到检查命令、输出无法解析、连续超时
 
-1. 所有检查通过（checker 报 ALL GREEN）。
-2. 达到 5 轮上限，仍未全绿。
-3. 同一失败连续出现两次。
-4. 修复引入回归（之前通过的检查失败）。
-5. builder 违反红线（弱化测试、删除/注释/跳过失败检查、未跑检查就声称已修复）。
-6. checker 无法产出有效报告（找不到检查命令、输出无法解析、连续超时）。
+仓库 `CLAUDE.md` 或 `AGENTS.md` 内若有 setup 写入的 `## Loop 停止规则` 段，以仓库版本为准。
 
-仓库的 `CLAUDE.md` 或 `AGENTS.md` 若有 `/setup-ouyangjiahong-skills` 写入的 `## Loop 停止规则` 段，以仓库版本为准（内容比本技能更完整，含红线和升级协议）。
-
-## 边界情况
-
-| 情况 | 处理方式 |
-|------|----------|
-| builder / checker agent 未定义 | 停下，提示先跑 `/setup-ouyangjiahong-skills` |
-| 参数为空或没有完成标准 | 停下，问用户任务目标和验收标准 |
-| checker 报 FAILED 但无失败明细 | 让 checker 重跑一次，输出真实错误行的关键行 |
-| checker 找不到检查命令 | 停下，问用户项目实际用什么命令检查 |
-| 第 5 轮仍 FAILED | 停止，报告最后一轮改动与失败项 |
-| 循环中用户插入新指令 | 暂停循环，处理指令后再决定是否继续 |
-| 任务范围在循环中扩大 | 停下，问用户是否继续 |
-
-## Checkpoint
-
-- 每次循环终止（成功或失败）都停下汇报，不自行重开。
-- 连续 2 轮未变绿时，向用户播报当前轮次和失败项。
-- 用户说停就停。
-
-## 完成条件
-
-- checker 报 ALL GREEN，且 diff 与检查结果已展示。
-- 或循环按停止规则终止，且轮次、失败项、最后一次改动已如实汇报。
+循环中用户插入新指令时暂停，处理后再决定继续。任务范围在循环中扩大时停步，问用户。
