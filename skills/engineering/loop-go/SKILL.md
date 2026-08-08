@@ -33,7 +33,7 @@ disable-model-invocation: true
 
 ### 1. 派 builder
 
-用 Task 工具，`subagent_type: "builder"`，prompt 只放这一轮简报（实现任务或修复上一轮失败）。等它带回改动。参照 `dispatch/references/harness-claude-code.md` 的普通模式写法（Agent 工具、同步等结果、不用 `run_in_background`），调子代理时 prompt 只放任务内容，不塞完整调度计划。
+用 Task 工具，`subagent_type: "builder"`，prompt 只放这一轮简报（实现任务或修复上一轮失败）。同步等结果（不要用 `run_in_background`），等它带回改动。调子代理时 prompt 只放任务内容，不塞完整调度计划。
 
 ### 2. 派 checker
 

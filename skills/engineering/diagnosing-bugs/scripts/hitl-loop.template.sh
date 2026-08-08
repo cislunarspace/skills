@@ -7,10 +7,13 @@
 #   bash hitl-loop.template.sh
 #
 # 两个辅助函数：
-#   step "<指令>"        → 显示指令，等回车
+#   step "<指令>"         → 显示指令，等回车
 #   capture VAR "<问题>"  → 显示问题，把回答读进 VAR
 #
 # 跑完后，抓到的值以 KEY=VALUE 形式打印出来，供 agent 解析。
+#
+# `capture` 会把它的值打印回终端，agent 在那里读它——所以
+# 用 capture 抓观察值，把登录这类事留给用户、写成 `step`。
 
 set -euo pipefail
 

@@ -9,10 +9,10 @@ unset GROUPS
 # 仓库内的 symlink，`git pull` 自动同步；新增/删除/改名后重跑一次。
 #
 # 用法:
-#   ./scripts/link-skills.sh           # 安装所有 skills
+#   ./scripts/link-skills.sh              # 安装所有 skills
 #   ./scripts/link-skills.sh engineering  # 只安装工程相关 skills
-#   ./scripts/link-skills.sh research     # 只安装研究相关 skills
-#   ./scripts/link-skills.sh engineering research  # 安装工程和研究相关 skills
+#   ./scripts/link-skills.sh productivity # 只安装生产力相关 skills
+#   ./scripts/link-skills.sh engineering productivity  # 安装多个分组
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 
@@ -22,7 +22,7 @@ source "$(dirname "$0")/lib/find-skills.sh"
 GROUPS=()
 for arg in "$@"; do
   case "$arg" in
-    engineering|research)
+    engineering|productivity|in-progress)
       GROUPS+=("$arg")
       ;;
     all|"")
@@ -30,7 +30,7 @@ for arg in "$@"; do
       ;;
     *)
       echo "未知的分组: $arg" >&2
-      echo "可用分组: engineering, research" >&2
+      echo "可用分组: engineering, productivity, in-progress" >&2
       exit 1
       ;;
   esac
@@ -71,7 +71,7 @@ else
     if command -v jq &>/dev/null; then
       # 找到 name 小写后等于 $group_lower 的 plugin，列出它的 skills[]
       while IFS= read -r skill_path; do
-        # skill_path 形如 ./skills/engineering/dispatch
+        # skill_path 形如 ./skills/engineering/ask-matt
         # src 指向仓库内该目录，name 用 basename（扁平安装到 $DEST）
         src="$REPO/skills/${skill_path#./skills/}"
         if [ -d "$src" ]; then

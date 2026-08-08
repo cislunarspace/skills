@@ -1,12 +1,12 @@
 ---
 name: triage
-description: 把 issue 和外部 PR 推过分诊角色的状态机——归类、验证、必要时追问，写出可供 agent 直接认领的 brief。当用户说"分诊"、"triage"、要求过一遍 issue/PR 或把它们推进到 ready-for-agent 等状态时使用。
+description: 把 issue 和外部 PR 推过分诊角色的状态机——归类、验证、必要时追问，写出可供 agent 直接认领的 brief。
 disable-model-invocation: true
 ---
 
 # Triage
 
-把项目 issue tracker 上的 issue 推过一个小型分诊状态机。
+把项目 issue tracker 上的 issue 推过一台小型分诊状态机。
 
 如果本仓库把外部 PR 也当作请求入口（见 issue-tracker 配置），分诊同样覆盖它们：**PR 就是带代码的 issue**——同样的角色、同样的状态、同一台机器，下文几处标了"针对 PR"的差异。裸 `#42` 按 tracker 配置解析为 issue 或 PR。
 
@@ -18,8 +18,8 @@ disable-model-invocation: true
 
 ## 参考文档
 
-- [AGENT-BRIEF.md](references/AGENT-BRIEF.md) — 如何写出耐用的 agent brief
-- [OUT-OF-SCOPE.md](references/OUT-OF-SCOPE.md) — `.out-of-scope/` 知识库如何运作
+- [AGENT-BRIEF.md](AGENT-BRIEF.md) — 如何写出耐用的 agent brief
+- [OUT-OF-SCOPE.md](OUT-OF-SCOPE.md) — `.out-of-scope/` 知识库如何运作
 
 ## 角色
 
@@ -40,7 +40,7 @@ disable-model-invocation: true
 
 每个分诊过的 issue 应当恰好带一个分类角色和一个状态角色。状态角色冲突时，先标出来问维护者，再做任何其他事。
 
-以上是规范角色名——issue tracker 里实际的 label 字符串可能不同。映射关系应当已提供，如未提供，参考 `docs/agents/triage-labels.md`。
+以上是规范角色名——issue tracker 里实际的 label 字符串可能不同。映射关系应当已提供，如未提供，跑 `/setup-ouyangjiahong-skills`。
 
 状态流转：无 label 的 issue 通常先进 `needs-triage`；从那里移到 `needs-info`、`ready-for-agent`、`ready-for-human` 或 `wontfix`。报告人回复后，`needs-info` 回到 `needs-triage`。维护者可随时覆盖——看起来异常的流转要先标出、先问再动。
 
@@ -76,13 +76,13 @@ PR 在范围内时，把它们也纳入这些类别，每行标注 `[PR]` 或 `[
 4. **追问（如需）。** 若请求需要充实，把 `/grilling` 和 `/domain-modeling` 两个 skill 一起用——一次一个问题把它问成形，磨锐领域术语，并在决策落定时同步更新 `CONTEXT.md`/ADR。
 
 5. **应用结论：**
-   - `ready-for-agent` — 发一条 agent brief 评论（见 [AGENT-BRIEF.md](references/AGENT-BRIEF.md)）。
+   - `ready-for-agent` — 发一条 agent brief 评论（[AGENT-BRIEF.md](AGENT-BRIEF.md)）。
    - `ready-for-human` — 与 agent brief 同结构，但说明为什么不能委派（需要判断、外部权限、设计决策、人工测试）。
    - `needs-info` — 发分诊记录（模板见下）。
    - `wontfix` — 关闭，评论内容取决于*为什么*：
      - **已实现** — 改动已在代码库中存在。指向它所在位置；**不要**写入 `.out-of-scope/`（那个知识库是给*被拒绝*的请求用的，不是已建好的功能）。
      - **被拒（bug）** — 礼貌解释，然后关闭。
-     - **被拒（enhancement）** — 写入 `.out-of-scope/`，评论里链接它，然后关闭（见 [OUT-OF-SCOPE.md](references/OUT-OF-SCOPE.md)）。
+     - **被拒（enhancement）** — 写入 `.out-of-scope/`，评论里链接它，然后关闭（[OUT-OF-SCOPE.md](OUT-OF-SCOPE.md)）。
    - `needs-triage` — 套上角色。若有部分进展，可选地留条评论。
 
 ## 快速状态覆盖
@@ -110,7 +110,3 @@ PR 在范围内时，把它们也纳入这些类别，每行标注 `[PR]` 或 `[
 ## 恢复之前的会话
 
 若 issue 或 PR 上已有分诊记录，读它们，检查报告人是否已回答了任何遗留问题，呈现更新后的画面再继续。别重复问已解决的问题。
-
-## 下一步
-
-- issue 标到 `ready-for-agent` 后：自己逐条做用 `/implement`，多条并行用 `/dispatch`
