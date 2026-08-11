@@ -10,31 +10,35 @@ SKILL.md 是 agent 在编码过程中**被触发的行为指令**，不是一次
 
 | 任务 prompt 要素 | 在 skill 里怎么处理 |
 |---|---|
-| Context | frontmatter 的 `description`：写触发场景。正文不写调用时才有的背景 |
+| Context | 模型可调用 skill 的 `description`：写触发场景；手动 skill 的 `description`：写给用户的一行用途说明。正文不写调用时才有的背景 |
 | Request | 正文开头：写明核心行为（具体做什么动作） |
 | Output Format | 正文单独章节：只在 skill 有固定产出时写（如 commit message 格式、交接文档结构） |
 | Constraints | 正文章节：边界情况表 + 明确的”不要做什么” |
 | Checkpoint | 正文章节：写明什么时候停下来问用户、什么时候自己继续 |
 
-## frontmatter：调度的依据
+## frontmatter：调用边界
 
-模型靠 frontmatter 决定要不要调用这个 skill，所以这里只服务于一件事——**让调度判断准确**。
+先决定 skill 的调用方式：
+
+- **模型可调用**：省去 `disable-model-invocation`。`description` 是常驻的模型上下文指针，写清用途和触发场景；适合模型或其他 skill 必须自行发现的流程。
+- **只允许手动调用**：设 `disable-model-invocation: true`。用户显式输入 `/skill-name` 才会运行，`description` 改为人类可读的一行用途说明；适合提交、推送、部署、外部写入等需要用户授权的流程，以及会直接或间接调用自身的递归流程。
+
+调用其他 skill 本身不是手动限制的理由：需要模型在任务中自动编排的 skill 可以保持模型可调用。
 
 ```yaml
 ---
 name: <skill-name>                   # 目录名，也是命令名（/<skill-name>）
-description: <一句话做什么>。当用户<触发场景/触发词>时使用。
+description: <一句话用途或触发场景>
 argument-hint: "可选的参数提示"
-disable-model-invocation: true      # 可选：只能手动触发，模型不会自动调用
+disable-model-invocation: true      # 仅手动调用时设置
 ---
 ```
 
 - **`name`** 命令名直接由它来（`<name>` → `/<name>`）。
-- **`description`** 写两件事：**做什么**（一句话）+ **什么时候用**（触发场景、触发词）。agent 根据触发场景描述决定是否调用。只写”是什么”不够，要写”什么情况下该轮到我”。描述里放 skill 的**引导词**（见下文”引导词”一节）——它是描述做触发工作的关键。
+- **`description`**：模型可调用时，写做什么和何时触发；仅手动调用时，删掉触发词和内部流程，保留用户理解命令用途所需的一句话。
 - **`argument-hint`**（可选）：参数提示，告诉用户调用时可以传什么。
-- **`disable-model-invocation`**（可选）：设 `true` 的 skill 只能由用户显式发起，模型不会自动触发。需要人主动发起的 skill 用它。
-- **`description` 的信息边界：** 写清 skill 解决的**真实问题**（用户的触发词背后，真正要解决的痛点是什么），以便调度判断。但不要暴露 skill 内部的步骤细节或 references 的内容摘要——frontmatter 只服务调度，正文才服务执行。
-- **排除条件：** description 里还应写明**什么时候不该触发**这个 skill。格式为"当用户……时，不要触发"。调度准确需要正向触发和负向排除双向约束。
+- **`disable-model-invocation`**（可选）：设为 `true` 后只有用户能显式发起，模型与其他 skill 都不能调用。
+- **信息边界**：description 不暴露内部步骤或 references 摘要；正文才服务执行。
 
 ## 正文：按需写这几节
 
