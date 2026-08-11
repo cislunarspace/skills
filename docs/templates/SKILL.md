@@ -1,8 +1,9 @@
 ---
 name: <skill-name>          # 目录名，也是命令名（/<skill-name>）
-description: <一句话做什么>。当用户<要求做 X / 提到 Y 关键词>时使用。  # 给 LLM 的匹配规则。例："分析代码库架构。当用户要求梳理项目结构或提到'架构图'时使用。"
+description: <一句话做什么>。当用户<要求做 X / 提到 Y 关键词>时使用。  # 模型可调用时，写给模型的匹配规则；手动 skill 则写给用户的简要说明
 # argument-hint: "<可选参数提示>"  # skill 接受参数时取消注释，例："文件路径" 或 "分支名（可选）"
-# disable-model-invocation: true   # 只能手动触发时取消注释
+# 涉及提交、推送、写入外部系统或可能递归调用的 skill，取消注释：
+# disable-model-invocation: true
 ---
 
 # <Skill Name>  <!-- 人类可读的标题，对应目录名 skill-name -->

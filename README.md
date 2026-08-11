@@ -34,8 +34,8 @@ Skills 按目录分组，安装时可以选择：
 
 列表虽长，日常在用的只有三个，外加 agent 工具自带的 plan 模式：
 
-1. 拿到新仓库，先跑 [`/setup-ouyangjiahong-skills`](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md)，配置 issue tracker、分诊标签和领域文档约定。
-2. 再跑 [`/sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md)，把写作要求和编码准则注入 `CLAUDE.md` / `AGENTS.md`，后续会话自动遵守。
+1. 拿到新仓库，先跑 [`/setup-ouyangjiahong-skills`](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md)，配置 issue tracker、分诊标签、领域文档和 Loop 工具。
+2. 再跑 [`/sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md)，把交流语言、写作要求和编码准则同步到 `CLAUDE.md` 与 `AGENTS.md`，后续会话自动遵守。
 3. 做事之前用 plan 模式讨论计划，配 [`/grill-with-docs`](./skills/engineering/grill-with-docs/SKILL.md) 追问打磨，把术语和架构决定写进 `CONTEXT.md` 和 ADR。
 
 其余 skill 留在仓库里按需自取，不属于日常流程。不确定用哪个时，问 [`/ask-matt`](./skills/engineering/ask-matt/SKILL.md)——它是这套 skill 的路由器。

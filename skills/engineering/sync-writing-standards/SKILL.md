@@ -1,41 +1,43 @@
 ---
 name: sync-writing-standards
-description: 将预定义的交流语言、写作要求、编码准则注入当前仓库的 CLAUDE.md 和 AGENTS.md。当用户说"同步写作规范"、"注入规范"、"sync-writing-standards"或要求把统一准则写进 CLAUDE.md/AGENTS.md 时使用。
+description: 把仓库统一的交流语言、写作要求和编码准则同步到 CLAUDE.md 与 AGENTS.md。用户要求同步、注入或更新写作规范时手动运行。
+disable-model-invocation: true
 ---
 
-# Sync Writing Standards
+用 `references/standards.md` 作为唯一内容来源，把三节规范同步到目标仓库的 `CLAUDE.md` 和 `AGENTS.md`。脚本负责节级替换或追加、保留其他内容、统一 LF 行尾并验证结果。
 
-把 `references/standards.md` 的三节（`## 交流语言`、`## 写作要求`、`## 编码准则`）注入目标仓库的 `CLAUDE.md` 和 `AGENTS.md`，确保内容逐字一致、行尾为 LF。
+## 流程
 
-## 步骤
+1. 确认目标目录：默认使用当前工作目录；目标不是仓库根目录时，先传入明确路径。
+2. 运行一次：
 
-1. 确认当前工作目录是目标仓库根目录。
-2. 跑一个命令：
-
-   ```text
+   ```bash
    node "{{SKILL_DIR}}/sync.js"
    ```
 
-   `{{SKILL_DIR}}` 是 skill 所在目录的绝对路径，由 harness 自动替换。
+   指定其他目录：
 
-   指定其他目标目录：`node "{{SKILL_DIR}}/sync.js" "/path/to/repo"`。
+   ```bash
+   node "{{SKILL_DIR}}/sync.js" "/path/to/repo"
+   ```
 
-脚本处理源文件归一化、对目标文件做节级替换或追加、验证三节内容一致。退出码 0 即成功，非 0 会打印原因。
+   `{{SKILL_DIR}}` 是 skill 所在目录的绝对路径，由 harness 替换。
+3. 以退出码判断结果：退出码 `0` 表示同步并验证成功；非 `0` 时报告完整错误并停止。
+4. 成功后检查 `git diff -- CLAUDE.md AGENTS.md`，向用户说明新增、替换或保留的内容。
 
-脚本已包揽所有操作。无需手动 Read + Edit 目标文件、跑 od/sed/python、或自己切 markdown 节——这些正是脚本要消灭的步骤。
+脚本已经包揽文件读取、节切分、写入、行尾归一化和一致性验证。不要再手动编辑同一批文件，也不要用其他脚本重复实现这些步骤。
 
 ## 完成条件
 
-- 脚本退出码 0。
-- 两个目标文件含三节，内容与 `references/standards.md` 对应节逐字一致。
-- 目标文件 LF 行尾。
+- 脚本退出码为 `0`。
+- `CLAUDE.md` 与 `AGENTS.md` 都存在，首行为对应的 `# CLAUDE.md` 或 `# AGENTS.md`。
+- 两个文件都包含 `## 交流语言`、`## 写作要求`、`## 编码准则`。
+- 三节内容分别与 `references/standards.md` 逐字一致。
+- 目标文件和源文件均使用 LF 行尾。
+- 其他已有章节仍保留。
 
 ## 维护
 
-- `references/standards.md` 是唯一内容来源。
-- `templates/` 目录中的文件是指向 `references/standards.md` 的 symlink，无需手动维护。
-- 所有文件 LF 行尾——脚本每次运行自动归一化。
-
-## 后续操作
-
-- 注入完成后：重启 Claude Code 会话让新规范生效
+- 只编辑 `references/standards.md` 更新规范正文；不要直接修改目标文件中的同步章节。
+- `templates/` 中若有指向规范源文件的软链接，不需要手动维护。
+- 规范同步成功后，重启 Claude Code 会话，让新规范进入上下文。
