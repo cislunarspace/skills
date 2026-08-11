@@ -21,9 +21,9 @@ SKILL.md 是 agent 在编码过程中**被触发的行为指令**，不是一次
 先决定 skill 的调用方式：
 
 - **模型可调用**：省去 `disable-model-invocation`。`description` 是常驻的模型上下文指针，写清用途和触发场景；适合模型或其他 skill 必须自行发现的流程。
-- **只允许手动调用**：设 `disable-model-invocation: true`。用户显式输入 `/skill-name` 才会运行，`description` 改为人类可读的一行用途说明；适合提交、推送、部署、外部写入和会递归调用其他 skill 的流程。
+- **只允许手动调用**：设 `disable-model-invocation: true`。用户显式输入 `/skill-name` 才会运行，`description` 改为人类可读的一行用途说明；适合提交、推送、部署、外部写入等需要用户授权的流程，以及会直接或间接调用自身的递归流程。
 
-手动 skill 不能被其他 skill 调用。多个手动 skill 共用的参考内容应放在普通文件里，由各自直接引用。
+调用其他 skill 本身不是手动限制的理由：需要模型在任务中自动编排的 skill 可以保持模型可调用。
 
 ```yaml
 ---
