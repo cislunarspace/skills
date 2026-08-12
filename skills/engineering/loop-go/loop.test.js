@@ -17,6 +17,8 @@ const SETUP_REFERENCES = path.resolve(__dirname, '..', 'setup-ouyangjiahong-skil
 const SEED_FILES = [
   'builder.md',
   'checker.md',
+  'builder-pi.md',
+  'checker-pi.md',
   'loop-go-command.md',
   'loop-stop-rules.md',
 ];

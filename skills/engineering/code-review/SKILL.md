@@ -77,6 +77,29 @@ issue tracker 应当已经提供给你——若 `docs/agents/issue-tracker.md` �
 
 末尾一行总结：每轴各几条发现、每轴最坏的问题（如有）是什么。不要跨轴选出一个"最坏"——那正是分开要避免的重排。
 
+## pi 适配（pi harness 无内置 subagent）
+
+pi 没有内置的 subagent 工具，两轴并行通过官方 `subagent` 扩展实现——每个子代理是一个独立的 `pi` 进程，上下文互不污染。
+
+前置（一次性，装过可跳过）：
+
+1. 安装 subagent 扩展：symlink 官方示例 `examples/extensions/subagent/` 的 `index.ts`、`agents.ts` 到 `~/.pi/agent/extensions/subagent/`。
+2. 确认 `~/.pi/agent/agents/` 下有用户级 `standards-reviewer.md` 和 `spec-reviewer.md`（本 skill 的两轴 agent；异味基线完整贴在 standards-reviewer 正文里，子代理没别的途径拿到它）。
+
+第 4 步在 pi 下改为一次 parallel 调用；规格缺失则 single 调 standards-reviewer：
+
+```
+subagent, parallel:
+tasks: [
+  {agent: "standards-reviewer", task: "diff 命令: git diff <固定点>...HEAD\ncommit 列表: <...>\n规范源文件: <列表>"},
+  {agent: "spec-reviewer", task: "diff 命令: git diff <固定点>...HEAD\ncommit 列表: <...>\n规格: <路径或内容>"}
+]
+```
+
+每次调用生成的差异信息（diff 命令、commit 列表、规范文件路径、规格路径）走 `task` 参数；固定内容（审查策略、异味基线、输出格式）留在 agent 定义里。项目级覆盖放 `.pi/agents/`，需 `agentScope: "both"` 并确认。
+
+没有扩展时的降级：bash 里后台起两个 `pi -p "..." > /tmp/review-<轴>.md &`，`wait` 后读文件，再按第 5 步汇总。
+
 ## 为什么分两轴
 
 一个改动可以过一轴、挂另一轴：

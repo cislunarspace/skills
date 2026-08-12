@@ -15,6 +15,7 @@ disable-model-invocation: true
 - `CONTEXT.md`、`CONTEXT-MAP.md`、`docs/adr/`、`*/*/docs/adr/`、`docs/agents/`、`.scratch/`。
 - `triage` skill 是否可用。
 - `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md`，以及 `~/.claude/agents/` 中的同名 agent。
+- pi 可用性（`which pi`）：`~/.pi/agent/extensions/subagent/` 是否已装、`~/.pi/agent/agents/` 中的 builder/checker，以及项目 `.pi/agents/builder.md`、`.pi/agents/checker.md`。
 - `pnpm-workspace.yaml` 与 `package.json` 的 `workspaces`，判断是否为明确的大型 monorepo。
 
 ## 2. 决策
@@ -43,7 +44,10 @@ GitHub remote 默认 GitHub（`gh`），GitLab remote 默认 GitLab（`glab`）�
 
 默认安装 builder、checker 和 `loop-go`。项目目录已有同名文件时询问是否覆盖；用户级 agent 已存在时，说明项目级副本只在当前仓库覆盖它。
 
-写入 `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md`，并向根文档写入 `### Loop Engineering` 指针和 `## Loop 停止规则`。
+- **Claude Code**：写入 `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md`。
+- **pi**（检测到 `pi` 且已装 subagent 扩展时）：写入 `.pi/agents/builder.md`、`.pi/agents/checker.md`（不锁模型，用 pi 默认模型）。pi 的 subagent 工具默认只加载用户级 agents（`~/.pi/agent/agents/`），项目级覆盖需 `agentScope: "both"`；未装扩展时提示先装（symlink 官方示例 `examples/extensions/subagent/` 或仓库内 `npm run link:pi`），或跳过 pi 部分。
+
+并向根文档写入 `### Loop Engineering` 指针和 `## Loop 停止规则`（两 harness 共享同一段）。
 
 `.claude/` 通常不随 worktree 出现；worktree 缺少 Loop agent 时，回主工作目录重跑本 skill。
 
@@ -61,6 +65,8 @@ GitHub remote 默认 GitHub（`gh`），GitLab remote 默认 GitLab（`glab`）�
 | `.claude/agents/builder.md` | `builder.md` |
 | `.claude/agents/checker.md` | `checker.md` |
 | `.claude/commands/loop-go.md` | `loop-go-command.md` |
+| `.pi/agents/builder.md`（pi 可用时） | `builder-pi.md` |
+| `.pi/agents/checker.md`（pi 可用时） | `checker-pi.md` |
 
 得到确认后才写入。
 
@@ -68,4 +74,5 @@ GitHub remote 默认 GitHub（`gh`），GitLab remote 默认 GitLab（`glab`）�
 
 - 优先编辑 `CLAUDE.md`，否则编辑 `AGENTS.md`；两者都不存在时询问用户。不要额外创建另一份。
 - 已有 `## Agent skills` 时在其中更新；已有 `### Loop Engineering` 或 `## Loop 停止规则` 时替换对应内容，避免重复。
+- pi 可用时写 `.pi/agents/builder.md`、`.pi/agents/checker.md`（已存在时先询问是否覆盖）。
 - 完成后说明哪些工程技能会读取 `docs/agents/*.md`，以及已安装时 `/loop-go <任务>` 可用。
