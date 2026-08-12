@@ -5,13 +5,16 @@ argument-hint: "[分支名]（可选，默认当前分支）"
 disable-model-invocation: true
 ---
 
-将一个已完成的分支推进到默认分支。按顺序执行；在阻塞问题、失败 CI 和合并前停下。
+默认场景是 piw 创建的 worktree：分支 checkout 在独立 worktree 中，主仓库停留在 base 分支。前半程（推送、创建 PR、评审、CI、合并）在 worktree 内即可完成；清理阶段需要回到主仓库操作。按顺序执行；在阻塞问题、失败 CI 和合并前停下。
 
-## 1. 确认分支
+## 1. 确认分支与场景
 
 1. 使用参数中的分支名；没有参数则运行 `git rev-parse --abbrev-ref HEAD`。
 2. 用 `git remote show origin` 识别默认分支；查询失败时使用 `master`。
-3. 当前分支是默认分支、没有 GitHub remote，或 `git log <base>..<branch> --oneline` 为空时，停止并说明原因。
+3. 用 `git worktree list` 识别场景：
+   - 当前目录不是主仓库（属于某个列出的 worktree）→ worktree 场景（默认）；
+   - 否则 → 普通场景。
+4. 当前分支是默认分支、没有 GitHub remote，或 `git log <base>..<branch> --oneline` 为空时，停止并说明原因。
 
 ## 2. 推送并创建 PR
 
@@ -66,19 +69,43 @@ gh pr merge <PR-number> --<mode> --delete-branch
 
 ## 6. 清理与验证
 
-仅在 PR 已合并后执行：
+仅在 PR 已合并后执行。
+
+### worktree 场景（默认）
+
+1. 在 worktree 内检查 `git status --porcelain`：
+   - 有未提交/未跟踪改动 → 停止，列出改动并询问用户如何处理；不自动 `git worktree remove --force`。
+   - 干净 → 继续。
+2. 先切到主仓库并确认，**再**执行任何删除操作：
 
 ```bash
-git checkout <base>
-git pull origin <base>
-git push origin --delete <branch> 2>/dev/null || true
-git branch -d <branch>
+cd <主仓库路径>   # 用 git worktree list 确认路径
+pwd              # 确认已离开 worktree
 ```
 
-报告以下可验证结果：远端分支已推送、PR URL、评审结论、CI 状态、合并方式，以及本地分支是否已删除。
+3. 此后所有命令一律用 `cd <主仓库路径> && ...` 前缀执行（防止 bash 工具 cwd 悬空）：
+
+```bash
+cd <主仓库路径> && git worktree remove <worktree路径>
+cd <主仓库路径> && git worktree prune
+cd <主仓库路径> && git checkout <base>   # 主仓库应已在 base；不在则切过去
+cd <主仓库路径> && git pull origin <base>
+cd <主仓库路径> && git branch -d <branch>
+```
+
+4. `git branch -d` 失败（squash 合并后常见，本地提交哈希不在 base 历史中）时，列出未合并提交并询问用户是否用 `-D` 强制删除，不自动执行。
+5. 清理完成后确认 bash 工具 cwd 有效：`pwd` 应显示主仓库路径；若仍指向已删除的 worktree（报 Working directory does not exist），用 `cd <主仓库路径>` 修复，或提示用户新开会话。
+
+### 普通场景
+
+在主仓库依次执行：`git checkout <base>`、`git pull origin <base>`、`git branch -d <branch>`（同样不自动 `-D`）。
+
+### 报告
+
+报告以下可验证结果：远端分支已推送、PR URL、评审结论、CI 状态、合并方式、worktree 是否已移除、本地分支是否已删除。
 
 ## 边界
 
 - 不执行 `git reset --hard`、`git push --force` 或 `gh pr close`。
-- GitLab 或本地仓库不走本 skill 的 GitHub 流程。
+- 不自动强制移除有未提交改动的 worktree；停下询问用户。
 - 用户要求的不是合并而只是创建 PR 时，在创建并报告 PR URL 后停止。
