@@ -20,6 +20,16 @@ npx skills@latest add cislunarspace/skills
 
 CLI 读取 `.claude-plugin/marketplace.json`，把 skill 软链到 `~/.claude/skills/`。安装时会提示选择要安装的分组（Engineering / Productivity / In-progress / 全部）。安装后，在 agent 里直接用 `/ask-matt`、`/grill-with-docs`、`/sync-writing-standards`、`/setup-ouyangjiahong-skills` 等命令。
 
+### pi（pi coding agent）
+
+pi 没有内置 subagent，用官方 subagent 扩展 + 本仓库 `pi/agents/` 的用户级 agent 定义：
+
+```bash
+npm run link:pi
+```
+
+把 `pi/agents/` 下 8 个 agent（standards-reviewer、spec-reviewer、builder、checker、scout、planner、reviewer、worker）软链到 `~/.pi/agent/agents/`。不锁模型，用 pi 默认模型。subagent 扩展本体（官方示例 `examples/extensions/subagent/`）需另行 symlink 到 `~/.pi/agent/extensions/subagent/`。项目级 agent 覆盖放 `.pi/agents/`，由 `/setup-ouyangjiahong-skills` 生成。
+
 ### 分组说明
 
 Skills 按目录分组，安装时可以选择：
