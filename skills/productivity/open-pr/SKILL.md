@@ -62,10 +62,16 @@ gh pr checks <PR-number>
 得到明确选择后执行：
 
 ```bash
-gh pr merge <PR-number> --<mode> --delete-branch
+gh pr merge <PR-number> --<mode>
 ```
 
-合并冲突时停止，交由 `/resolving-merge-conflicts` 处理。
+**不要加 `--delete-branch`**：gh 删除本地分支前会切到默认分支，worktree 场景下与主仓库占用的 base 分支冲突（报 ``'master' is already used by worktree``），且报错时远端分支也删不掉。合并成功后单独删远端分支：
+
+```bash
+git push origin --delete <branch>
+```
+
+本地分支删除在清理阶段由主仓库上下文处理。合并冲突时停止，交由 `/resolving-merge-conflicts` 处理。
 
 ## 6. 清理与验证
 
@@ -73,39 +79,41 @@ gh pr merge <PR-number> --<mode> --delete-branch
 
 ### worktree 场景（默认）
 
+当前会话启动于 worktree 内，**本会话不删除 worktree 与本地分支**：worktree 是会话自身所在目录，删除后 bash 工具即失效（`Cannot execute bash commands`，`cd` 前缀无法绕过）；且被 worktree checkout 的分支必须先移除 worktree 才能删除。这两项交由主仓库上下文的会话或用户手动完成（见第 5 条）。
+
 1. 在 worktree 内检查 `git status --porcelain`：
-   - 有未提交/未跟踪改动 → 停止，列出改动并询问用户如何处理；不自动 `git worktree remove --force`。
+   - 有未提交/未跟踪改动 → 停止，列出改动并询问用户如何处理。
    - 干净 → 继续。
-2. 先切到主仓库并确认，**再**执行任何删除操作：
+2. 趁 worktree 目录尚存、bash 仍可用，完成不依赖 worktree 删除的操作。先切到主仓库并确认：
 
 ```bash
 cd <主仓库路径>   # 用 git worktree list 确认路径
 pwd              # 确认已离开 worktree
 ```
 
-3. 此后所有命令一律用 `cd <主仓库路径> && ...` 前缀执行（防止 bash 工具 cwd 悬空）：
+3. 此后所有命令一律用 `cd <主仓库路径> && ...` 前缀执行（bash 工具 cwd 仍是 worktree，目录未删前可用）：
 
 ```bash
-cd <主仓库路径> && git worktree remove <worktree路径>
-cd <主仓库路径> && git worktree prune
 cd <主仓库路径> && git checkout <base>   # 主仓库应已在 base；不在则切过去
 cd <主仓库路径> && git pull origin <base>
-cd <主仓库路径> && git branch -d <branch>
 ```
 
-4. `git branch -d` 失败（squash 合并后常见，本地提交哈希不在 base 历史中）时，列出未合并提交并询问用户是否用 `-D` 强制删除，不自动执行。
-5. 清理完成后确认 bash 工具 cwd 有效：`pwd` 应显示主仓库路径；若仍指向已删除的 worktree（报 Working directory does not exist），用 `cd <主仓库路径>` 修复，或提示用户新开会话。
+4. 本会话清理到此为止。剩余两项不在本会话执行，交由主仓库上下文（新会话或用户手动）：
+   - `git worktree remove <worktree路径> && git worktree prune`
+   - `git branch -d/-D <branch>`：squash 合并后本地提交不在 base 历史中，`-d` 会报 "not fully merged"，需用户确认后 `-D`；且须在 worktree remove 之后执行。
+   向用户报告这两条命令与原因。
 
 ### 普通场景
 
-在主仓库依次执行：`git checkout <base>`、`git pull origin <base>`、`git branch -d <branch>`（同样不自动 `-D`）。
+在主仓库依次执行：`git checkout <base>`、`git pull origin <base>`、`git branch -d <branch>`（同样不自动 `-D`）。远端分支已在第 5 步删除。
 
 ### 报告
 
-报告以下可验证结果：远端分支已推送、PR URL、评审结论、CI 状态、合并方式、worktree 是否已移除、本地分支是否已删除。
+报告以下可验证结果：远端分支已推送、PR URL、评审结论、CI 状态、合并方式、远端分支是否已删除、主仓库 base 是否已同步；worktree 与本地分支删除交由主仓库上下文（附命令）。
 
 ## 边界
 
 - 不执行 `git reset --hard`、`git push --force` 或 `gh pr close`。
 - 不自动强制移除有未提交改动的 worktree；停下询问用户。
+- worktree 场景下不删除 worktree 与本地分支（会话自身目录，交由主仓库上下文）。
 - 用户要求的不是合并而只是创建 PR 时，在创建并报告 PR URL 后停止。
