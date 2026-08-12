@@ -5,6 +5,7 @@
   "description": "Personal Claude Code skill collection. Install with `npm run link`.",
   "scripts": {
     "link": "scripts/link-skills.sh",
+    "link:pi": "scripts/link-pi-agents.sh",
     "list": "scripts/list-skills.sh",
     "check": "scripts/check-skills.sh",
     "test": "node --test 'skills/**/*.test.js'"

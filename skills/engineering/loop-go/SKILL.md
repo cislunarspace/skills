@@ -54,3 +54,20 @@ builder 和 checker 由 `/setup-ouyangjiahong-skills` 定义。未加载时停�
 仓库 `CLAUDE.md` 或 `AGENTS.md` 内若有 setup 写入的 `## Loop 停止规则` 段，以仓库版本为准。
 
 循环中用户插入新指令时暂停，处理后再决定继续。任务范围在循环中扩大时停步，问用户。
+
+## pi 适配（pi harness 无内置 Task 工具）
+
+pi 没有 Claude Code 的 Task/subagent 工具，用官方 `subagent` 扩展替代（每个子代理是一个独立 `pi` 进程，上下文隔离）。
+
+前置（一次性）：
+
+1. 安装 subagent 扩展：symlink 官方示例 `examples/extensions/subagent/` 的 `index.ts`、`agents.ts` 到 `~/.pi/agent/extensions/subagent/`。
+2. 确认 `~/.pi/agent/agents/` 下有用户级 `builder.md`、`checker.md`（pi 版 agent，tools 用 pi 小写工具名；不锁模型，用 pi 默认模型）。
+
+pi 下的派发：
+
+- 步骤 1（派 builder）：subagent 工具 single 模式，`agent: "builder"`，task 放简报和本轮任务。
+- 步骤 2（派 checker）：subagent 工具 single 模式，`agent: "checker"`，task 放同一份简报。
+- 步骤 3（判定）不变——checker 的最终输出即报告；失败时把完整报告塞进下一轮 builder 的 task。
+
+项目级覆盖：`.pi/agents/builder.md`、`.pi/agents/checker.md` 覆盖用户级，需 `agentScope: "both"` 并确认。`.pi/agents/` 与 `.claude/agents/` 各自独立维护。
