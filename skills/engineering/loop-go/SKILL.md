@@ -11,9 +11,9 @@ disable-model-invocation: true
 
 ## 前置条件
 
-builder 和 checker 由 `/setup-ouyangjiahong-skills` 定义。未加载时停步，提示切回主分支重跑 setup。
+builder 和 checker 由 `/setup-claude-code`（Claude Code）或 `/setup-pi`（pi）定义。未加载时停步，提示切回主分支重跑对应 setup。
 
-`.claude/` 不在 git 中——worktree 不会带 builder/checker。回到主工作目录跑 `/setup-ouyangjiahong-skills`，worktree 共享主仓库的 `.claude/agents/`。
+`.claude/` 不在 git 中——worktree 不会带 builder/checker。回到主工作目录跑 `/setup-claude-code`，worktree 共享主仓库的 `.claude/agents/`。
 
 ## 步骤
 
@@ -63,6 +63,8 @@ pi 没有 Claude Code 的 Task/subagent 工具，用官方 `subagent` 扩展替�
 
 1. 安装 subagent 扩展：symlink 官方示例 `examples/extensions/subagent/` 的 `index.ts`、`agents.ts` 到 `~/.pi/agent/extensions/subagent/`。
 2. 确认 `~/.pi/agent/agents/` 下有用户级 `builder.md`、`checker.md`（pi 版 agent，tools 用 pi 小写工具名；不锁模型，用 pi 默认模型）。
+
+以上由 `/setup-pi` 统一安装；缺任何一项时提示先跑 `/setup-pi`。
 
 pi 下的派发：
 

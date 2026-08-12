@@ -83,4 +83,4 @@ disable-model-invocation: true
 
 ## 前提条件
 
-**`/setup-ouyangjiahong-skills`** —— 在你的第一次工程流程前跑一次，配置其他 skill 假定的 issue tracker、分诊标签和文档布局。自定义的 issue tracker 也支持。
+**`/setup-ouyangjiahong-skills`** —— 在你的第一次工程流程前跑一次，配置其他 skill 假定的 issue tracker、分诊标签和文档布局。自定义的 issue tracker 也支持。Loop 工具按 harness 另配：Claude Code 跑 `/setup-claude-code`，pi 跑 `/setup-pi`。

@@ -4,7 +4,7 @@
 
 一套给 Claude Code、Kimi Code 等 Agent 编码工具用的 skills，小、可组合，基于日常工程习惯。软件工程部分对齐 [mattpocock/skills](https://github.com/mattpocock/skills) 并翻译成中文。
 
-当前包含 25 个 skill，持续迭代中。
+当前包含 27 个 skill，持续迭代中。
 
 ## 写作要求的来历
 
@@ -18,7 +18,7 @@
 npx skills@latest add cislunarspace/skills
 ```
 
-CLI 读取 `.claude-plugin/marketplace.json`，把 skill 软链到 `~/.claude/skills/`。安装时会提示选择要安装的分组（Engineering / Productivity / In-progress / 全部）。安装后，在 agent 里直接用 `/ask-matt`、`/grill-with-docs`、`/sync-writing-standards`、`/setup-ouyangjiahong-skills` 等命令。
+CLI 读取 `.claude-plugin/marketplace.json`，把 skill 软链到 `~/.claude/skills/`。安装时会提示选择要安装的分组（Engineering / Productivity / In-progress / 全部）。安装后，在 agent 里直接用 `/ask-matt`、`/grill-with-docs`、`/sync-writing-standards`、`/setup-ouyangjiahong-skills`、`/setup-pi` 等命令。
 
 ### pi（pi coding agent）
 
@@ -28,7 +28,9 @@ pi 没有内置 subagent，用官方 subagent 扩展 + 本仓库 `pi/agents/` �
 npm run link:pi
 ```
 
-把 `pi/agents/` 下 8 个 agent（standards-reviewer、spec-reviewer、builder、checker、scout、planner、reviewer、worker）软链到 `~/.pi/agent/agents/`。不锁模型，用 pi 默认模型。subagent 扩展本体（官方示例 `examples/extensions/subagent/`）需另行 symlink 到 `~/.pi/agent/extensions/subagent/`。项目级 agent 覆盖放 `.pi/agents/`，由 `/setup-ouyangjiahong-skills` 生成。
+把 `pi/agents/` 下 8 个 agent（standards-reviewer、spec-reviewer、builder、checker、scout、planner、reviewer、worker）软链到 `~/.pi/agent/agents/`。不锁模型，用 pi 默认模型。subagent 扩展本体（官方示例 `examples/extensions/subagent/`）需另行 symlink 到 `~/.pi/agent/extensions/subagent/`。项目级 agent 覆盖放 `.pi/agents/`，由 `/setup-pi` 生成。
+
+新机器首次用 pi 跑 [`/setup-pi`](./skills/engineering/setup-pi/SKILL.md)：一次装好 `piw`/`piw-clean` 命令（`~/.bashrc`）、subagent 扩展和用户级 agents。
 
 ### 分组说明
 
@@ -36,7 +38,7 @@ Skills 按目录分组，安装时可以选择：
 
 | 分组 | 说明 | 数量 |
 |------|------|------|
-| **engineering** | 工程相关：路由、计划打磨、规范注入、仓库配置、代码审查、调试、TDD、架构等 | 19 |
+| **engineering** | 工程相关：路由、计划打磨、规范注入、仓库配置、代码审查、调试、TDD、架构等 | 21 |
 | **productivity** | 通用生产力：访谈质询、会话交接、教学、问卷 | 4 |
 | **in-progress** | 实验性 skill，可能变动 | 2 |
 
@@ -44,9 +46,10 @@ Skills 按目录分组，安装时可以选择：
 
 列表虽长，日常在用的只有三个，外加 agent 工具自带的 plan 模式：
 
-1. 拿到新仓库，先跑 [`/setup-ouyangjiahong-skills`](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md)，配置 issue tracker、分诊标签、领域文档和 Loop 工具。
-2. 再跑 [`/sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md)，把交流语言、写作要求和编码准则同步到 `CLAUDE.md` 与 `AGENTS.md`，后续会话自动遵守。
-3. 做事之前用 plan 模式讨论计划，配 [`/grill-with-docs`](./skills/engineering/grill-with-docs/SKILL.md) 追问打磨，把术语和架构决定写进 `CONTEXT.md` 和 ADR。
+1. 拿到新仓库，先跑 [`/setup-ouyangjiahong-skills`](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md)，配置 issue tracker、分诊标签和领域文档（harness 无关底座）。
+2. 再按 harness 配置 Loop 工具：Claude Code 跑 [`/setup-claude-code`](./skills/engineering/setup-claude-code/SKILL.md)（builder/checker agents 与 loop-go 命令），pi 跑 [`/setup-pi`](./skills/engineering/setup-pi/SKILL.md)（piw/piw-clean 命令与 subagent）。新机器首次用 pi 时也要跑 `/setup-pi`。
+3. 然后跑 [`/sync-writing-standards`](./skills/engineering/sync-writing-standards/SKILL.md)，把交流语言、写作要求和编码准则同步到 `CLAUDE.md` 与 `AGENTS.md`，后续会话自动遵守。
+4. 做事之前用 plan 模式讨论计划，配 [`/grill-with-docs`](./skills/engineering/grill-with-docs/SKILL.md) 追问打磨，把术语和架构决定写进 `CONTEXT.md` 和 ADR。
 
 其余 skill 留在仓库里按需自取，不属于日常流程。不确定用哪个时，问 [`/ask-matt`](./skills/engineering/ask-matt/SKILL.md)——它是这套 skill 的路由器。
 
@@ -59,7 +62,9 @@ Skills 按目录分组，安装时可以选择：
 | Skill | 作用 | 触发词 |
 |---|---|---|
 | [ask-matt](./skills/engineering/ask-matt/SKILL.md) | 问该用哪个 skill 或流程，整套 skill 的路由器 | `ask-matt` |
-| [setup-ouyangjiahong-skills](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md) | 配置 issue tracker、分诊标签、领域文档约定 | `setup-ouyangjiahong-skills` |
+| [setup-ouyangjiahong-skills](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md) | 配置 issue tracker、分诊标签、领域文档（harness 无关底座） | `setup-ouyangjiahong-skills` |
+| [setup-claude-code](./skills/engineering/setup-claude-code/SKILL.md) | 配置 Claude Code 的 Loop 工具（builder/checker 与 loop-go） | `setup-claude-code` |
+| [setup-pi](./skills/engineering/setup-pi/SKILL.md) | 配置 pi：piw/piw-clean 命令与 subagent 扩展/agents | `setup-pi` |
 | [sync-writing-standards](./skills/engineering/sync-writing-standards/SKILL.md) | 把交流语言、写作要求、编码准则注入 `CLAUDE.md` | `sync-writing-standards` |
 | [grill-with-docs](./skills/engineering/grill-with-docs/SKILL.md) | 追问打磨计划，同时维护领域文档 | `grill-with-docs` |
 | [domain-modeling](./skills/engineering/domain-modeling/SKILL.md) | 构建和打磨领域模型，维护 `CONTEXT.md` 与 ADR | `domain-modeling` |
