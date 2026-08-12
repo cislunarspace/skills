@@ -4,7 +4,7 @@
 
 一套给 Claude Code、Kimi Code 等 Agent 编码工具用的 skills，小、可组合，基于日常工程习惯。软件工程部分对齐 [mattpocock/skills](https://github.com/mattpocock/skills) 并翻译成中文。
 
-当前包含 25 个 skill，持续迭代中。
+当前包含 26 个 skill，持续迭代中。
 
 ## 写作要求的来历
 
@@ -26,7 +26,7 @@ Skills 按目录分组，安装时可以选择：
 
 | 分组 | 说明 | 数量 |
 |------|------|------|
-| **engineering** | 工程相关：路由、计划打磨、规范注入、仓库配置、代码审查、调试、TDD、架构等 | 19 |
+| **engineering** | 工程相关：路由、计划打磨、规范注入、仓库配置、代码审查、调试、TDD、架构等 | 20 |
 | **productivity** | 通用生产力：访谈质询、会话交接、教学、问卷 | 4 |
 | **in-progress** | 实验性 skill，可能变动 | 2 |
 
@@ -66,6 +66,7 @@ Skills 按目录分组，安装时可以选择：
 | [prototype](./skills/engineering/prototype/SKILL.md) | 造一次性原型回答设计问题 | `prototype`、`原型` |
 | [research](./skills/engineering/research/SKILL.md) | 派后台子代理基于一手资料调研问题，产出 markdown | `research`、`调研` |
 | [improve-codebase-architecture](./skills/engineering/improve-codebase-architecture/SKILL.md) | 扫描深化机会，生成 HTML 报告，就选中项做质询 | `improve-codebase-architecture` |
+| [lightwan-cli](./skills/engineering/lightwan-cli/SKILL.md) | 用 CLI + HTTP 手动连接/断开 LightWAN SD-WAN 客户端 | `lightwan-cli`、`LightWAN`、`SD-WAN` |
 | [loop-go](./skills/engineering/loop-go/SKILL.md) | 循环运行 builder 和 checker 直到所有检查通过 | `loop-go`、`循环构建`、`loop until green` |
 
 ### Productivity
