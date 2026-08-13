@@ -60,7 +60,7 @@ Skills 按目录分组，安装时可以选择：
 |---|---|---|
 | [ask-matt](./skills/engineering/ask-matt/SKILL.md) | 问该用哪个 skill 或流程，整套 skill 的路由器 | `ask-matt` |
 | [setup-claude-code](./skills/engineering/setup-claude-code/SKILL.md) | 配置 Claude Code harness：写 `.claude/agents/` 的 builder/checker 与 `/loop-go` 命令 | `setup-claude-code` |
-| [setup-ouyangjiahong-skills](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md) | 配置 issue tracker、分诊标签、领域文档约定 | `setup-ouyangjiahong-skills` |
+| [setup-ouyangjiahong-skills](./skills/engineering/setup-ouyangjiahong-skills/SKILL.md) | 配置 issue tracker、分诊标签、领域文档与 Loop 停止规则 | `setup-ouyangjiahong-skills` |
 | [setup-pi](./skills/engineering/setup-pi/SKILL.md) | 配置 pi harness：装 subagent 扩展与用户级 agents，写项目级 `.pi/agents/` | `setup-pi` |
 | [sync-writing-standards](./skills/engineering/sync-writing-standards/SKILL.md) | 把交流语言、写作要求、编码准则注入 `CLAUDE.md` | `sync-writing-standards` |
 | [grill-with-docs](./skills/engineering/grill-with-docs/SKILL.md) | 追问打磨计划，同时维护领域文档 | `grill-with-docs` |

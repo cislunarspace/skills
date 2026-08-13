@@ -4,7 +4,7 @@ set -euo pipefail
 # 一键完成 pi harness 的机器级一次性配置：
 #   1. subagent 扩展：官方示例 symlink 到 ~/.pi/agent/extensions/subagent/
 #   2. 用户级 agents：本仓库 pi/agents/ 软链到 ~/.pi/agent/agents/
-# 幂等，可重复跑；项目级配置（.pi/agents/）由 setup-ouyangjiahong-skills 在目标仓库写入。
+# 幂等，可重复跑；项目级配置（.pi/agents/）由 /setup-pi 在目标仓库写入。
 #
 # 用法:
 #   npm run setup:pi
@@ -39,4 +39,4 @@ fi
 
 echo ""
 echo "机器级配置完成。重启 pi 后 subagent 扩展生效。"
-echo "项目级配置（.pi/agents/）在目标仓库跑 /setup-ouyangjiahong-skills 时写入。"
+echo "项目级配置（.pi/agents/）在目标仓库跑 /setup-pi 时写入。"
