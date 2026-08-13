@@ -65,7 +65,6 @@ pi 没有 Claude Code 的 Task/subagent 工具，用官方 `subagent` 扩展替�
 2. 确认 `~/.pi/agent/agents/` 下有用户级 `builder.md`、`checker.md`（pi 版 agent，tools 用 pi 小写工具名；不锁模型，用 pi 默认模型）。
 
 以上由 `/setup-pi` 统一安装；缺任何一项时提示先跑 `/setup-pi`。
-
 pi 下的派发：
 
 - 步骤 1（派 builder）：subagent 工具 single 模式，`agent: "builder"`，task 放简报和本轮任务。

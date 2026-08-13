@@ -1,29 +1,33 @@
 ---
 name: setup-claude-code
-description: 初始化 Claude Code 的 Loop 工具（builder/checker agents 与 loop-go 命令）。配合 setup-ouyangjiahong-skills 使用。
+description: 配置 Claude Code harness：写 .claude/agents/ 的 builder/checker 与 /loop-go 命令。在 Claude Code 下使用 Loop 工程技能时手动运行。
 disable-model-invocation: true
 ---
 
-为当前仓库配置 Claude Code 的 Loop 工具。先读取现状，再逐项取得用户结论；只在用户确认后写入。
+为当前仓库配置 Claude Code harness 下工程技能（loop-go 等）所需的文件：`.claude/agents/builder.md`、`.claude/agents/checker.md` 和 `.claude/commands/loop-go.md`。只写取得用户确认的文件。
 
 ## 1. 探索
 
 读取，不要假设：
 
-- `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md`，以及 `~/.claude/agents/` 中的同名 agent。
-- 根文档 `CLAUDE.md`、`AGENTS.md` 是否已有 `### Loop Engineering` / `## Loop 停止规则`。
+- `which claude`：Claude Code 不可用时提示先装或跳过本 skill。
+- 项目 `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md` 是否存在。
+- `~/.claude/agents/` 中是否已有同名用户级 agent，项目级副本只在当前仓库覆盖它，要向用户说明。
+- 根目录 `CLAUDE.md`、`AGENTS.md` 是否已有 `### Loop Engineering` 或 `## Loop 停止规则`。
 
 ## 2. 决策
 
-先总结现状和缺口，给出推荐让用户接受、修改或跳过；结论确认后再写入。
+总结现状和缺口，逐项给出推荐，让用户接受、修改或跳过；每项结论确认后再进入下一项。
 
-### A. Loop 工具
+### A. 项目级
 
-默认安装 builder、checker 和 loop-go。项目目录已有同名文件时询问是否覆盖；用户级 agent 已存在时，说明项目级副本只在当前仓库覆盖它。
-
-写入 `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md`，并向根文档写入 `### Loop Engineering` 指针和 `## Loop 停止规则`。
+写入 `.claude/agents/builder.md`、`.claude/agents/checker.md`（模板见 `references/builder.md`、`checker.md`）和 `.claude/commands/loop-go.md`（模板见 `references/loop-go-command.md`）。已存在时询问是否覆盖。
 
 `.claude/` 通常不随 worktree 出现；worktree 缺少 Loop agent 时，回主工作目录重跑本 skill。
+
+### B. 共享段
+
+根文档缺 `### Loop Engineering` 或 `## Loop 停止规则` 时，提示跑 `/setup-ouyangjiahong-skills` 补（它管两 harness 共享的配置）；用户不想跑时说明 `/loop-go` 有内置停止规则兜底。
 
 ## 3. 确认写入
 
@@ -36,36 +40,10 @@ disable-model-invocation: true
 | `.claude/agents/builder.md` | `builder.md` |
 | `.claude/agents/checker.md` | `checker.md` |
 | `.claude/commands/loop-go.md` | `loop-go-command.md` |
-| 根文档 `### Loop Engineering` / `## Loop 停止规则` | `loop-stop-rules.md` |
 
 得到确认后才写入。
 
 ## 4. 写入与结束
 
-- 优先编辑 `CLAUDE.md`，否则编辑 `AGENTS.md`；两者都不存在时询问用户。不要额外创建另一份。
-- 已有 `## Agent skills` 时在其中更新；已有 `### Loop Engineering` 或 `## Loop 停止规则` 时替换对应内容，避免重复。
-- 完成后说明：已安装时 `/loop-go <任务>` 可用；pi harness 的 Loop 工具由 `/setup-pi` 配置。
-
-## 边界情况
-
-| 情况 | 处理方式 |
-|------|----------|
-| 项目无 `.claude/` 目录 | 创建；`.claude/` 不随 worktree 出现，worktree 中缺 agent 时回主工作目录重跑 |
-| `.claude/agents/` 已有同名文件 | 询问覆盖；拒绝则跳过对应文件 |
-| 根文档两者都不存在 | 询问用户写哪份，不自行创建第二份 |
-| 用户用 pi 而非 Claude Code | 改用 `/setup-pi`，本 skill 可跳过 |
-
-## Checkpoint
-
-停下来问用户：
-
-1. 覆盖已有 `.claude/agents/` 或 `.claude/commands/` 文件。
-2. 根文档选择（`CLAUDE.md` / `AGENTS.md`）不明确时。
-3. 任务范围超出上述各项。
-
-其他情况：做完再汇报。
-
-## 完成条件
-
-- `.claude/agents/builder.md`、`.claude/agents/checker.md`、`.claude/commands/loop-go.md` 就位。
-- 根文档有 `### Loop Engineering` 指针与 `## Loop 停止规则`，且不重复。
+- 写入上述文件（已存在时先询问是否覆盖）。
+- 完成后说明：`/loop-go <任务>` 可用，builder/checker 通过 Task 工具派发。

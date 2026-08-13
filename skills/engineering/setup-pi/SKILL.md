@@ -1,103 +1,66 @@
 ---
 name: setup-pi
-description: 配置 pi coding agent：安装 piw/piw-clean 命令、subagent 扩展与 agents。首次在机器或仓库使用 pi 时手动运行。
+description: 配置 pi harness：装 subagent 扩展与用户级 agents，按需配置 piw/piw-clean，并写项目级 .pi/agents/ 的 builder/checker。在 pi 下使用 Loop 工程技能时手动运行。
 disable-model-invocation: true
 ---
 
-为 pi harness 建立命令行工具和 subagent 配置。先读取现状，再逐项取得用户结论；只在用户确认后写入。
+为当前仓库配置 pi harness 下工程技能（loop-go、code-review 等）所需的两层文件：机器级（subagent 扩展、用户级 agents 与可选的 worktree 命令，每台机器一次）和项目级（`.pi/agents/builder.md`、`checker.md`）。只写取得用户确认的文件。
 
 ## 1. 探索
 
 读取，不要假设：
 
-- `which pi`；交互 shell 里 `type piw piw-clean` 是否已定义；`~/.bashrc`（或等效 rc 文件）中是否已有同名函数。
-- `~/.pi/agent/extensions/subagent/` 是否已装（应有 `index.ts`、`agents.ts`）。
-- `~/.pi/agent/agents/` 中现有的用户级 agents。
-- 当前仓库的 `pi/agents/` 与 `scripts/link-pi-agents.sh`（本 skills 仓库里有；别的机器可能没有）。
-- 项目 `.pi/agents/` 与 `.claude/agents/`，根文档是否已有 `### Loop Engineering` / `## Loop 停止规则`。
+- `which pi`：pi 不可用时提示先装 pi 或跳过本 skill。
+- `~/.pi/agent/extensions/subagent/` 是否已有 `index.ts`、`agents.ts`（官方 subagent 扩展）。
+- `~/.pi/agent/agents/` 是否已有用户级 `builder.md`、`checker.md`，以及 `standards-reviewer.md`、`spec-reviewer.md`（code-review 两轴需要）。
+- 交互 shell 中 `type piw piw-clean` 是否已定义，以及对应 rc 文件中是否已有同名函数。
+- 项目 `.pi/agents/builder.md`、`.pi/agents/checker.md` 是否存在。
+- 根目录 `CLAUDE.md`、`AGENTS.md` 是否已有 `### Loop Engineering` 或 `## Loop 停止规则`。
+- skills 仓库路径：`~/.claude/skills/` 或 `~/.agents/skills/` 下本仓库 skill 的软链可解析出仓库根；解析不到就问用户。
 
 ## 2. 决策
 
-先总结现状和缺口。按以下顺序逐项给出推荐，让用户接受、修改或跳过；每项结论确认后再进入下一项。
+总结现状和缺口，逐项给出推荐，让用户接受、修改或跳过；每项结论确认后再进入下一项。
 
-### A. piw / piw-clean 命令
+### A. 机器级（每台机器一次，缺才装）
 
-`piw <分支名>` 新建分支 + worktree（`../pi-<分支名>`）并直接进入 pi；`piw-clean` 在 worktree 内清理当前 worktree、prune、删分支并回到主仓库。
+- subagent 扩展缺：定位 pi 包的官方示例（`npm root -g` 下 `@earendil-works/pi-coding-agent/examples/extensions/subagent/`），symlink `index.ts`、`agents.ts` 到 `~/.pi/agent/extensions/subagent/`。
+- 用户级 agents 缺：从 skills 仓库 `pi/agents/` symlink 全部 `.md` 到 `~/.pi/agent/agents/`。
 
-默认写入 `~/.bashrc` 的**非交互 guard 之前**（与服务器 `.bashrc` 中 Rust/Cargo PATH 同位置，SSH 非交互命令也能用）。用户实际用的是 zsh 时写 `~/.zshrc`。已有同名函数时询问是否覆盖。
+在 skills 仓库跑 `bash scripts/setup-pi.sh` 一次完成（幂等，可重跑）；或逐条执行等价命令。装完提示用户**重启 pi** 后扩展生效。
 
-写入 rc 文件（种子 `piw-commands.md`）。
+### B. 可选的 piw / piw-clean 命令
 
-### B. subagent 扩展
+`piw <分支名>` 新建分支和 worktree（`../pi-<分支名>`）后直接进入 pi；`piw-clean` 在 piw 创建的 worktree 内清理 worktree、prune、删除分支并回到主仓库。
 
-pi 没有内置 subagent，官方 `subagent` 扩展提供（每个子代理是独立 `pi` 进程，上下文隔离）。symlink 官方示例：
+需要这套命令时，向用户确认写入实际 shell 的 rc 文件（bash 默认 `~/.bashrc`，zsh 用 `~/.zshrc`）。函数块必须插入非交互 guard 之前；已有同名函数时询问是否覆盖。模板见 `references/piw-commands.md`。
 
-```bash
-PI_PKG="$(dirname "$(readlink -f "$(which pi)")")/../lib/node_modules/@earendil-works/pi-coding-agent"
-mkdir -p ~/.pi/agent/extensions/subagent
-ln -sf "$PI_PKG/examples/extensions/subagent/index.ts" ~/.pi/agent/extensions/subagent/index.ts
-ln -sf "$PI_PKG/examples/extensions/subagent/agents.ts" ~/.pi/agent/extensions/subagent/agents.ts
-```
+### C. 项目级
 
-已装（两个文件都在）时跳过。
+写入 `.pi/agents/builder.md`、`.pi/agents/checker.md`（模板见 `references/builder-pi.md`、`checker-pi.md`；不锁模型，用 pi 默认模型）。已存在时询问是否覆盖。
 
-### C. 用户级 agents
+pi 的 subagent 工具默认只加载用户级 agents；项目级文件只有调用时带 `agentScope: "both"` 才加载，且会先向用户确认。`.pi/agents/` 与 `.claude/agents/` 各自独立维护。
 
-本仓库有 `pi/agents/` 时跑 `npm run link:pi`，软链 8 个 agent（standards-reviewer、spec-reviewer、builder、checker、scout、planner、reviewer、worker）到 `~/.pi/agent/agents/`。不锁模型，用 pi 默认模型。仓库不在手边时从 `pi/agents/` 复制或跳过并告知。
+### D. 共享段
 
-### D. 项目级 agents（项目用 loop-go 时）
-
-写入 `.pi/agents/builder.md`、`.pi/agents/checker.md`（种子 `builder-pi.md`、`checker-pi.md`；tools 用 pi 小写工具名，不锁模型）。pi 的 subagent 工具默认只加载用户级 agents，项目级覆盖需 `agentScope: "both"`——只对可信仓库开，并在写入时说明。
-
-### E. 根文档 Loop 指针
-
-与 setup-claude-code 共享同一段：根文档（优先 `CLAUDE.md`，否则 `AGENTS.md`）写 `### Loop Engineering` 指针和 `## Loop 停止规则`。已有时跳过，避免重复。
+根文档缺 `### Loop Engineering` 或 `## Loop 停止规则` 时，提示跑 `/setup-ouyangjiahong-skills` 补（它管两 harness 共享的配置）；用户不想跑时说明 `/loop-go` 有内置停止规则兜底。
 
 ## 3. 确认写入
 
 只展示将写入或更新的文件、使用的种子模板及对已有内容的保留、替换或追加方式。不要输出模板全文。
 
+种子模板在 `references/`：
+
 | 目标文件 | 种子模板 |
 | --- | --- |
-| rc 文件（`~/.bashrc` 等，guard 之前） | `piw-commands.md` |
-| `~/.pi/agent/extensions/subagent/index.ts`、`agents.ts` | 官方示例（symlink） |
-| `~/.pi/agent/agents/`（8 个 agent） | `pi/agents/*.md`（`npm run link:pi`） |
-| `.pi/agents/builder.md`（loop-go 时） | `builder-pi.md` |
-| `.pi/agents/checker.md`（loop-go 时） | `checker-pi.md` |
-| 根文档 `### Loop Engineering` / `## Loop 停止规则` | `loop-stop-rules.md` |
+| `.pi/agents/builder.md` | `builder-pi.md` |
+| `.pi/agents/checker.md` | `checker-pi.md` |
+| shell rc 文件中的 `piw` / `piw-clean` | `piw-commands.md` |
 
 得到确认后才写入。
 
 ## 4. 写入与结束
 
-- rc 文件：函数块插到非交互 guard 之前；已有同名函数时先把旧定义注释备份再替换。
-- 写完验证：新开交互 shell `type piw piw-clean`；`ls ~/.pi/agent/extensions/subagent/` 与 `ls ~/.pi/agent/agents/` 内容就位；项目内 `git worktree list` 第一条是主仓库。
-- 完成后说明：`piw <分支名>` 直接可用；loop-go 在 pi 下用 subagent 派发，依赖 C（用户级 builder/checker）和 D（项目级覆盖，可选）。
-
-## 边界情况
-
-| 情况 | 处理方式 |
-|------|----------|
-| `pi` 未安装 | 先装 pi（`npm i -g` 或用户惯用方式），再继续 |
-| 仓库不在手边（无 `pi/agents/` 和 `link:pi`） | 手动复制种子到 `~/.pi/agent/agents/`，或跳过 C 并告知缺哪些 agent |
-| `~/.bashrc` 不存在 | 创建它；实际用的是 zsh/fish 时写对应 rc 文件并告知 |
-| rc 文件已有 piw/piw-clean | 询问覆盖；拒绝则跳过 A |
-| 项目 `.pi/agents/` 已有同名文件 | 询问覆盖；拒绝则跳过 |
-| 项目不可信（项目级 agents 需 `agentScope: "both"` 才加载） | 跳过 D，说明可用用户级 agents 兜底 |
-| worktree 中运行（`.pi/` 不随 worktree 出现） | 回主工作目录重跑本 skill |
-
-## Checkpoint
-
-停下来问用户：
-
-1. 覆盖已有 piw/piw-clean 或 rc 文件内容。
-2. 写 `.pi/agents/` 项目级文件（涉及 `agentScope: "both"` 信任决策）。
-3. 任务范围超出上述各项。
-
-其他情况：做完再汇报。
-
-## 完成条件
-
-- rc 文件含新版 `piw` 与 `piw-clean` 函数，交互 shell 加载后 `type piw-clean` 可见"自动定位主仓库"逻辑。
-- subagent 扩展与用户级 agents 就位（B、C）。
-- 项目需要 loop-go 时，`.pi/agents/` 项目级 agents 与根文档 Loop 指针就位（D、E）。
+- 写入 `.pi/agents/builder.md`、`.pi/agents/checker.md`（已存在时先询问是否覆盖）。
+- 写入 piw 命令时，在新开交互 shell 验证 `type piw piw-clean`；`piw-clean` 会在有未提交改动时强制删除 worktree，必须先向用户说明。
+- 完成后说明：重启 pi 后 subagent 扩展生效；`/loop-go <任务>` 自动用 subagent 派 builder/checker，`/code-review` 用 standards-reviewer/spec-reviewer 并行两轴。
