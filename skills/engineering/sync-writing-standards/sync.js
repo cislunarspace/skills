@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 'use strict';
 
-// sync.js — 把 references/standards.md 三节注入目标仓库 CLAUDE.md / AGENTS.md。
+// sync.js — 把 references/standards.md 三节注入目标仓库的 AGENTS.md / CLAUDE.md。
 //
-// 用法: node sync.js [目标仓库根目录]
-//   不传参默认 process.cwd()。
+// 用法: node sync.js [目标仓库根目录] [--file AGENTS.md|CLAUDE.md|both]
+//   不传目录默认 process.cwd()；--file 缺省 AGENTS.md，both 表示两个文件都同步。
 //
 // 仅依赖 Node 标准库（fs / path），跨 Windows / macOS / Linux。
 
@@ -12,7 +12,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SECTION_TITLES = ['交流语言', '写作要求', '编码准则'];
-const TARGET_FILES = ['CLAUDE.md', 'AGENTS.md'];
+const BOTH_FILES = ['CLAUDE.md', 'AGENTS.md'];
+const VALID_FILE_ARGS = new Set(['AGENTS.MD', 'CLAUDE.MD', 'BOTH']);
 
 // ---- 输出 ----
 
@@ -140,11 +141,41 @@ function ensureH1(content, expected) {
   return [expected, '', content].join('\n');
 }
 
+// ---- 参数解析 ----
+
+// 解析命令行参数：第一个位置参数是目标目录；--file / -f 指定目标文件
+// （AGENTS.md / CLAUDE.md / both，大小写不敏感），缺省 AGENTS.md。
+function parseArgs(argv) {
+  const parsed = { targetDir: undefined, file: 'AGENTS.md' };
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--file' || arg === '-f') {
+      const value = argv[i + 1];
+      if (!value || value.startsWith('-')) {
+        die('--file 需要一个参数值: AGENTS.md / CLAUDE.md / both');
+      }
+      const key = value.toUpperCase();
+      if (!VALID_FILE_ARGS.has(key)) {
+        die(`无效的 --file 值 "${value}"，可选 AGENTS.md / CLAUDE.md / both`);
+      }
+      parsed.file = key === 'BOTH' ? 'both' : key === 'AGENTS.MD' ? 'AGENTS.md' : 'CLAUDE.md';
+      i++;
+    } else if (parsed.targetDir === undefined) {
+      parsed.targetDir = arg;
+    } else {
+      die(`无法识别的参数: ${arg}`);
+    }
+  }
+  return parsed;
+}
+
 // ---- 流程 ----
 
 function run() {
   const skillDir = process.env.SKILL_DIR || path.dirname(__filename);
-  const targetDir = process.argv[2] || process.cwd();
+  const parsed = parseArgs(process.argv.slice(2));
+  const targetDir = parsed.targetDir || process.cwd();
+  const targetFiles = parsed.file === 'both' ? BOTH_FILES : [parsed.file];
   const standardsPath = path.join(skillDir, 'references', 'standards.md');
 
   // standards.md 必须存在且是普通文件。
@@ -177,7 +208,8 @@ function run() {
     sourceSections[title] = section;
   }
 
-  for (const name of TARGET_FILES) {
+  log(`==> 目标文件: ${targetFiles.join(' + ')}`);
+  for (const name of targetFiles) {
     const filePath = path.join(targetDir, name);
     if (!fs.existsSync(filePath)) {
       log(`==> ${name}: 不存在，创建并注入三节`);
@@ -199,7 +231,7 @@ function run() {
   }
 
   log('==> 归一化目标文件行尾 (LF)');
-  for (const name of TARGET_FILES) {
+  for (const name of targetFiles) {
     const filePath = path.join(targetDir, name);
     writeLF(filePath, readLF(filePath));
   }
@@ -207,11 +239,11 @@ function run() {
   log('==> 验证');
   for (const filePath of [
     standardsPath,
-    ...TARGET_FILES.map((n) => path.join(targetDir, n)),
+    ...targetFiles.map((n) => path.join(targetDir, n)),
   ]) {
     if (countCR(filePath) > 0) die(`${filePath} 含 CR`);
   }
-  for (const name of TARGET_FILES) {
+  for (const name of targetFiles) {
     const filePath = path.join(targetDir, name);
     const content = readLF(filePath);
     const lines = content.split('\n');
@@ -226,7 +258,7 @@ function run() {
   }
 
   log('完成。');
-  for (const name of TARGET_FILES) {
+  for (const name of targetFiles) {
     log(`  ${path.join(targetDir, name)}`);
   }
 }
