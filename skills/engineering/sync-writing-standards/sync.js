@@ -3,8 +3,8 @@
 
 // sync.js — 把 references/standards.md 三节注入目标仓库的 AGENTS.md / CLAUDE.md。
 //
-// 用法: node sync.js [目标仓库根目录] [--file AGENTS.md|CLAUDE.md|both]
-//   不传目录默认 process.cwd()；--file 缺省 AGENTS.md，both 表示两个文件都同步。
+// 用法: node sync.js [目标仓库根目录] [--file AGENTS.md|CLAUDE.md]
+//   不传目录默认 process.cwd()；--file 缺省 AGENTS.md。
 //
 // 仅依赖 Node 标准库（fs / path），跨 Windows / macOS / Linux。
 
@@ -12,8 +12,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const SECTION_TITLES = ['交流语言', '写作要求', '编码准则'];
-const BOTH_FILES = ['CLAUDE.md', 'AGENTS.md'];
-const VALID_FILE_ARGS = new Set(['AGENTS.MD', 'CLAUDE.MD', 'BOTH']);
+// --file 参数值（大写化后）→ 目标文件名，兼做合法值校验。
+const FILE_MAP = { 'AGENTS.MD': 'AGENTS.md', 'CLAUDE.MD': 'CLAUDE.md' };
 
 // ---- 输出 ----
 
@@ -144,7 +144,7 @@ function ensureH1(content, expected) {
 // ---- 参数解析 ----
 
 // 解析命令行参数：第一个位置参数是目标目录；--file / -f 指定目标文件
-// （AGENTS.md / CLAUDE.md / both，大小写不敏感），缺省 AGENTS.md。
+// （AGENTS.md / CLAUDE.md，大小写不敏感），缺省 AGENTS.md。
 function parseArgs(argv) {
   const parsed = { targetDir: undefined, file: 'AGENTS.md' };
   for (let i = 0; i < argv.length; i++) {
@@ -152,13 +152,13 @@ function parseArgs(argv) {
     if (arg === '--file' || arg === '-f') {
       const value = argv[i + 1];
       if (!value || value.startsWith('-')) {
-        die('--file 需要一个参数值: AGENTS.md / CLAUDE.md / both');
+        die('--file 需要一个参数值: AGENTS.md / CLAUDE.md');
       }
       const key = value.toUpperCase();
-      if (!VALID_FILE_ARGS.has(key)) {
-        die(`无效的 --file 值 "${value}"，可选 AGENTS.md / CLAUDE.md / both`);
+      if (!(key in FILE_MAP)) {
+        die(`无效的 --file 值 "${value}"，可选 AGENTS.md / CLAUDE.md`);
       }
-      parsed.file = key === 'BOTH' ? 'both' : key === 'AGENTS.MD' ? 'AGENTS.md' : 'CLAUDE.md';
+      parsed.file = FILE_MAP[key];
       i++;
     } else if (parsed.targetDir === undefined) {
       parsed.targetDir = arg;
@@ -175,7 +175,7 @@ function run() {
   const skillDir = process.env.SKILL_DIR || path.dirname(__filename);
   const parsed = parseArgs(process.argv.slice(2));
   const targetDir = parsed.targetDir || process.cwd();
-  const targetFiles = parsed.file === 'both' ? BOTH_FILES : [parsed.file];
+  const targetFiles = [parsed.file];
   const standardsPath = path.join(skillDir, 'references', 'standards.md');
 
   // standards.md 必须存在且是普通文件。

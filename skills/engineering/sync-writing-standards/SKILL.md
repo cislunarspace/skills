@@ -1,33 +1,26 @@
 ---
 name: sync-writing-standards
-description: 把仓库统一的交流语言、写作要求和编码准则同步到 AGENTS.md（默认）或 CLAUDE.md，也可两者同时同步。用户要求同步、注入或更新写作规范时手动运行。
+description: 把仓库统一的交流语言、写作要求和编码准则同步到 AGENTS.md 或 CLAUDE.md，默认 AGENTS.md。用户要求同步、注入或更新写作规范时手动运行。
 disable-model-invocation: true
 ---
 
-用 `references/standards.md` 作为唯一内容来源，把三节规范同步到目标仓库的一个或两个指令文件。脚本负责节级替换或追加、保留其他内容、统一 LF 行尾并验证结果。
+用 `references/standards.md` 作为唯一内容来源，把三节规范同步到目标仓库的指令文件。脚本负责节级替换或追加、保留其他内容、统一 LF 行尾并验证结果。
 
-目标文件三选一，默认 `AGENTS.md`：
-
-- `AGENTS.md`（默认）
-- `CLAUDE.md`
-- `both`：两个文件都同步
+目标文件二选一：`AGENTS.md`（默认）或 `CLAUDE.md`。
 
 ## 流程
 
 1. 确认目标目录与目标文件：
    - 目录：默认当前工作目录；目标不是仓库根目录时，传入明确路径。
-   - 文件：用户已指明记录到 `CLAUDE.md` 或两者时遵从；未指明时使用默认 `AGENTS.md`，无需追问。
+   - 文件：用户已指明记录到 `CLAUDE.md` 时遵从；未指明时使用默认 `AGENTS.md`，无需追问。
 2. 运行一次：
 
    ```bash
    # 默认：只同步 AGENTS.md
    node "{{SKILL_DIR}}/sync.js"
 
-   # 同步 CLAUDE.md
+   # 同步 CLAUDE.md（--file 可简写为 -f）
    node "{{SKILL_DIR}}/sync.js" --file CLAUDE.md
-
-   # 两个文件都同步
-   node "{{SKILL_DIR}}/sync.js" --file both
 
    # 指定目录
    node "{{SKILL_DIR}}/sync.js" "/path/to/repo" --file CLAUDE.md
