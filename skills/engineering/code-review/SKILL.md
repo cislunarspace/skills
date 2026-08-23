@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: 审查自指定固定点（commit、branch、tag 或 merge-base）以来的改动，分两轴——规范（代码是否遵守本仓库已记录的编码规范？）与规格（代码是否实现了原始 issue / 规格要的东西？）。两个子代理并行跑两轴审查，结果并排呈现。当用户要 review 分支、PR、WIP 改动，或说'review since X'时使用。
+description: 审查自指定固定点（commit、branch、tag 或 merge-base）以来的改动，分两轴——规范（代码是否遵守本仓库已记录的编码规范？）与规格（代码是否实现了原始 issue / 规格要的东西？）。两轴依次审查，结果并排呈现。当用户要 review 分支、PR、WIP 改动，或说'review since X'时使用。
 ---
 
 对 `HEAD` 与用户指定固定点之间的 diff 做两轴审查：
@@ -8,7 +8,7 @@ description: 审查自指定固定点（commit、branch、tag 或 merge-base）�
 - **规范（Standards）**——代码是否遵守本仓库已记录的编码规范？
 - **规格（Spec）**——代码是否忠实地实现了原始 issue / 规格？
 
-两轴由**并行子代理**同时跑，互不污染对方的上下文，最终由本 skill 汇总两边发现。
+两轴**依次**审查，各自产出一份独立报告，最终由本 skill 汇总两边发现。
 
 issue tracker 应当已经提供给你——若 `docs/agents/issue-tracker.md` 不存在，跑 `/setup-ouyangjiahong-skills`。
 
@@ -20,7 +20,7 @@ issue tracker 应当已经提供给你——若 `docs/agents/issue-tracker.md` �
 
 把 diff 命令一次性记下来：`git diff <fixed-point>...HEAD`（三点，比较的是 merge-base）。同时记下 commit 列表：`git log <fixed-point>..HEAD --oneline`。
 
-继续之前，先确认固定点能解析（`git rev-parse <fixed-point>`）、diff 非空。坏引用或空 diff 应当在这里就挂——不要拖到两个并行子代理里面才挂。
+继续之前，先确认固定点能解析（`git rev-parse <fixed-point>`）、diff 非空。坏引用或空 diff 应当在这里就挂，不要拖到审查中途才挂。
 
 ### 2. 找规格来源
 
@@ -56,52 +56,21 @@ issue tracker 应当已经提供给你——若 `docs/agents/issue-tracker.md` �
 - **中间人（Middle Man）**——一个类或函数主要只是转发。→ 删掉，直接调真正的目标。
 - **被拒的遗赠（Refused Bequest）**——子类或实现者把继承来的大部分东西忽略或 override。→ 放弃继承，改用组合。
 
-### 4. 并行起两个子代理
+### 4. 依次跑两轴
 
-**规范子代理的 prompt**——包含：
+先跑**规范轴**，再跑**规格轴**。每轴按下面的任务说明独立审一遍 diff，各自产出一份报告；两轴的发现互不合并、互不重排。
 
-- 完整的 diff 命令和 commit 列表。
-- 步骤 3 找到的规范源文件列表，**加上步骤 3 的异味基线完整贴上**——子代理没别的途径拿到它。
-- 任务：「按文件 / hunk 汇报（在相关处）：(a) diff 违反了哪条已记录的规范——引用规范（文件 + 那条规则）；(b) 你看到的基线异味——点名并引用对应 hunk。区分硬性违反和判断题——已记录规范的违反可以是硬性的，但基线异味永远是判断题，且已记录的仓库规范压住基线。工具已经在管的，跳过。400 字以内。」
+**规范轴的任务**——对照规范源文件（步骤 3）和上文的异味基线：按文件 / hunk 汇报（在相关处）：(a) diff 违反了哪条已记录的规范——引用规范（文件 + 那条规则）；(b) 你看到的基线异味——点名并引用对应 hunk。区分硬性违反和判断题——已记录规范的违反可以是硬性的，但基线异味永远是判断题，且已记录的仓库规范压住基线。工具已经在管的，跳过。400 字以内。
 
-**规格子代理的 prompt**——包含：
+**规格轴的任务**——对照规格（路径或拉取到的内容）：汇报：(a) 规格要、但缺失或半成品的需求；(b) diff 里有、但规格没要的行为（范围蔓延）；(c) 看似已实现、但实现看起来不对的需求。每条引用规格的对应行。400 字以内。
 
-- diff 命令和 commit 列表。
-- 规格的路径，或拉取到的内容。
-- 任务：「汇报：(a) 规格要、但缺失或半成品的需求；(b) diff 里有、但规格没要的行为（范围蔓延）；(c) 看似已实现、但实现看起来不对的需求。每条引用规格的对应行。400 字以内。」
-
-规格缺失时跳过规格子代理，并在最终报告里写明。
-
-两个子代理返回后，先把返回值还原成两份纯文本报告再进第 5 步；返回形态因 harness 而异，结构化对象先看清结构、取承载文本的字段。提取失败时诊断返回结构本身——重跑是最后手段。
+规格缺失时跳过规格轴，并在最终报告里写明。
 
 ### 5. 汇总
 
 把两份报告分别放在 `## 规范` 和 `## 规格` 标题下，逐字或略加清理。**不要**合并或重排发现项——两轴故意分开（见"为什么分两轴"）。
 
 末尾一行总结：每轴各几条发现、每轴最坏的问题（如有）是什么。不要跨轴选出一个"最坏"——那正是分开要避免的重排。
-
-## pi 适配（pi harness 无内置 subagent）
-
-pi 没有内置的 subagent 工具，两轴并行通过官方 `subagent` 扩展实现——每个子代理是一个独立的 `pi` 进程，上下文互不污染。
-
-前置（一次性，装过可跳过）：
-
-1. 安装 subagent 扩展：symlink 官方示例 `examples/extensions/subagent/` 的 `index.ts`、`agents.ts` 到 `~/.pi/agent/extensions/subagent/`。
-2. 确认 `~/.pi/agent/agents/` 下有用户级 `standards-reviewer.md` 和 `spec-reviewer.md`（本 skill 的两轴 agent；异味基线完整贴在 standards-reviewer 正文里，子代理没别的途径拿到它）。
-
-第 4 步在 pi 下改为一次 parallel 调用；规格缺失则 single 调 standards-reviewer：
-
-```
-subagent, parallel:
-tasks: [
-  {agent: "standards-reviewer", task: "diff 命令: git diff <固定点>...HEAD\ncommit 列表: <...>\n规范源文件: <列表>"},
-  {agent: "spec-reviewer", task: "diff 命令: git diff <固定点>...HEAD\ncommit 列表: <...>\n规格: <路径或内容>"}
-]
-```
-
-每次调用生成的差异信息（diff 命令、commit 列表、规范文件路径、规格路径）走 `task` 参数；固定内容（审查策略、异味基线、输出格式）留在 agent 定义里。项目级覆盖放 `.pi/agents/`，需 `agentScope: "both"` 并确认。
-
-没有扩展时的降级：bash 里后台起两个 `pi -p "..." > /tmp/review-<轴>.md &`，`wait` 后读文件，再按第 5 步汇总。
 
 ## 为什么分两轴
 
