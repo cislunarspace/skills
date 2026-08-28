@@ -43,21 +43,33 @@ gh pr list --head <branch> --json url,number --jq '.[0]'
 - 评审执行失败：报告错误，询问用户是否跳过评审；只有明确同意才继续。
 - 无阻塞项：报告评审结论，进入 CI。
 
-## 4. CI
+## 4. 预检：可合并性 + CI
 
-运行：
+`gh pr checks` 只反映检查结果，不反映分支是否落后 base 或被阻塞，合并前先查 PR 本身：
+
+```bash
+gh pr view <PR-number> --json state,isDraft,mergeable,mergeStateStatus
+```
+
+- `state` 不是 `OPEN`：停止并报告。若 PR 因 head 分支被删而被 GitHub 自动关闭、且分支已重新推送，询问用户是否 `gh pr reopen` 后重跑本 skill。
+- `isDraft` 为 `true`（或 `mergeStateStatus` 为 `DRAFT`）：运行 `gh pr ready <PR-number>` 后继续。
+- `mergeable` 为 `CONFLICTING` 或 `mergeStateStatus` 为 `DIRTY`：存在冲突，交由 `/resolving-merge-conflicts`，解决并 push 后重跑本步。
+- `mergeStateStatus` 为 `BEHIND`：head 分支落后 base。`git fetch origin <base>` 后 `git rebase origin/<base>`（出现冲突同上交由 `/resolving-merge-conflicts`），再用 `git push --force-with-lease origin <branch>` 推送；回到本步开头重新预检——rebase 产生新 commit，CI 必须重跑。
+- `mergeStateStatus` 为 `BLOCKED`：被分支保护规则阻塞（如缺 review），报告原因，停止。
+
+可合并后运行：
 
 ```bash
 gh pr checks <PR-number>
 ```
 
-- 全部通过：继续。
+- 全部通过：进入合并。
 - 有失败：列出失败项，停止等待修复、push 后重跑本 skill。
 - 仍在运行：每 30 秒重查一次，最多 5 分钟；超时后报告状态并等待用户决定，不能自行合并。
 
 ## 5. 合并
 
-确认 PR、评审和 CI 均已通过后，展示 PR URL 并询问用户选择合并方式：`squash`（默认）、`merge` 或 `rebase`。
+确认评审与预检均通过后，展示 PR URL 并询问用户选择合并方式：`squash`（默认）、`merge` 或 `rebase`。
 
 得到明确选择后执行：
 
@@ -65,9 +77,14 @@ gh pr checks <PR-number>
 gh pr merge <PR-number> --<mode>
 ```
 
-**不要加 `--delete-branch`**：gh 删除本地分支前会切到默认分支，worktree 场景下与主仓库占用的 base 分支冲突（报 ``'master' is already used by worktree``），且报错时远端分支也删不掉。合并成功后单独删远端分支：
+**不要加 `--delete-branch`**：gh 删除本地分支前会切到默认分支，worktree 场景下与主仓库占用的 base 分支冲突（报 ``'master' is already used by worktree``），且报错时远端分支也删不掉。
+
+**合并失败立即停止**：报告错误，不做任何清理。未合并的 PR 删除远端 head 分支会被 GitHub 自动关闭，这是禁止操作。
+
+合并命令执行成功后，确认状态已变为 `MERGED`，再单独删远端分支：
 
 ```bash
+gh pr view <PR-number> --json state --jq .state   # 必须输出 MERGED
 git push origin --delete <branch>
 ```
 
@@ -75,7 +92,7 @@ git push origin --delete <branch>
 
 ## 6. 清理与验证
 
-仅在 PR 已合并后执行。
+仅在第 5 步确认 `state` 为 `MERGED` 后执行。
 
 ### worktree 场景（默认）
 
@@ -113,7 +130,7 @@ cd <主仓库路径> && git pull origin <base>
 
 ## 边界
 
-- 不执行 `git reset --hard`、`git push --force` 或 `gh pr close`。
+- 不执行 `git reset --hard`、裸 `git push --force` 或 `gh pr close`；rebase 后同步远端分支只允许 `git push --force-with-lease`。
 - 不自动强制移除有未提交改动的 worktree；停下询问用户。
 - worktree 场景下不删除 worktree 与本地分支（会话自身目录，交由主仓库上下文）。
 - 用户要求的不是合并而只是创建 PR 时，在创建并报告 PR URL 后停止。
