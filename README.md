@@ -42,7 +42,7 @@ CLI 读取 `.claude-plugin/marketplace.json`，把 skill 软链到 `~/.claude/sk
 | [sync-writing-standards](./skills/engineering/sync-writing-standards/SKILL.md) | 把交流语言、写作要求、编码准则注入 `AGENTS.md` | `sync-writing-standards` |
 | [grill-with-docs](./skills/engineering/grill-with-docs/SKILL.md) | 追问打磨计划，同时维护领域文档 | `grill-with-docs` |
 | [domain-modeling](./skills/engineering/domain-modeling/SKILL.md) | 构建和打磨领域模型，维护 `CONTEXT.md` 与 ADR | `domain-modeling` |
-| [codebase-design](./skills/engineering/codebase-design/SKILL.md) | "深模块"共享词汇：设计接口、找深化机会、定接缝位置 | `codebase-design`、`深模块` |
+| [codebase-design](./skills/engineering/codebase-design/SKILL.md) | "深模块"共享术语：设计接口、找深化机会、定接口位置 | `codebase-design`、`深模块` |
 | [to-spec](./skills/engineering/to-spec/SKILL.md) | 把当前对话综合成规格，发布到 issue tracker | `to-spec` |
 | [implement](./skills/engineering/implement/SKILL.md) | 基于 spec 或 ticket 执行一段实现，配 TDD 和 code-review | `implement`、`实现` |
 | [tdd](./skills/engineering/tdd/SKILL.md) | 测试驱动开发，红-绿循环 | `tdd`、`TDD`、`red-green` |
