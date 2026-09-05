@@ -134,3 +134,7 @@ cd <主仓库路径> && git pull origin <base>
 - 不自动强制移除有未提交改动的 worktree；停下询问用户。
 - worktree 场景下不删除 worktree 与本地分支（会话自身目录，交由主仓库上下文）。
 - 用户要求的不是合并而只是创建 PR 时，在创建并报告 PR URL 后停止。
+
+## Project 同步
+
+仓库配置了 GitHub Project 时：开始实现前将关联 Issue 设为 `In progress`，创建 PR 后设为 `In review`；PR 合并并验证完成后，将 Issue 设为 `Done`，再以 `Completed` 原因关闭。PR 关闭但未合并时，不自动关闭 Issue 或设为 `No action`。使用 `/github-project` 操作并复核。

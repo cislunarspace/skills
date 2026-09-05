@@ -33,6 +33,22 @@ GitHub 的 issue 和 PR 共享编号空间，所以 `#42` 可能是其中任一�
 
 运行 `gh issue view <number> --comments`。
 
+## GitHub Project
+
+- Issue 和 PR 都加入仓库约定的 GitHub Project；Project 是工作状态的来源，label 只表达分类、领域或分诊角色。
+- 使用 `gh project item-list <number> --owner <owner> --format json` 查询项目项，使用 `gh project item-edit <item-id> --project-id <project-id> --field-id <field-id> --single-select-option-id <option-id>` 更新字段。
+- 默认状态流转：`Inbox` → `Backlog` → `Ready` → `In progress` → `In review` → `Done` / `No action`。
+- `Done` 对应 Issue 以 `Completed` 关闭；`No action` 对应 Issue 以 `Not planned` 关闭；重开的 Issue 回到 `Inbox`。
+- `Priority` 使用 `P0`–`P3`，`Start Date` 由维护者维护。具体 Project、字段 ID 和选项 ID 由仓库的 `docs/agents/issue-tracker.md` 记录。
+
+### 工作流状态迁移
+
+- 新 Issue：加入 Project，设为 `Inbox`。
+- 分诊确认但未排期：`Backlog`；可开始：`Ready`。
+- 开始实现：`In progress`；创建 PR：`In review`。
+- PR 合并并验证完成：Issue 关闭原因为 `Completed`，Project 设为 `Done`。
+- PR 关闭但未合并：不自动关闭 Issue 或设为 `No action`，等待维护者决定。
+
 ## Wayfinding 操作
 
 被 `/wayfinder` 使用。**地图**是一个 issue，其下挂**子** issue 作为工单。

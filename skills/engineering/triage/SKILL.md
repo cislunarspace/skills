@@ -44,6 +44,10 @@ disable-model-invocation: true
 
 状态流转：无 label 的 issue 通常先进 `needs-triage`；从那里移到 `needs-info`、`ready-for-agent`、`ready-for-human` 或 `wontfix`。报告人回复后，`needs-info` 回到 `needs-triage`。维护者可随时覆盖——看起来异常的流转要先标出、先问再动。
 
+## GitHub Project 同步
+
+GitHub 仓库若配置了 Project，分诊时同步工作状态：新 Issue 设为 `Inbox`；已确认但未排期设为 `Backlog`；可开始处理设为 `Ready`；明确拒绝设为 `No action`。`needs-info` 只表示信息不足，不替代 Project Status。使用 `/github-project` 执行并复核更新。
+
 ## 调用
 
 维护者发起 `/triage`，用自然语言描述要做的事。解读请求并执行。例如：

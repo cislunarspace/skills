@@ -24,6 +24,7 @@
       "skills": [
         "./skills/productivity/grilling",
         "./skills/productivity/handoff",
+        "./skills/productivity/github-project",
         "./skills/productivity/open-pr"
       ]
     }

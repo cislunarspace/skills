@@ -40,12 +40,6 @@ git branch --show-current
 
 确认已提交的会话文件不再有未提交改动，且提交落在第 1 步确认的分支上（`git branch --show-current`）。
 
-### 4. 关闭关联 issue
+### 4. 关联 Issue
 
-没有关联 issue 时跳过。否则逐个运行 `gh issue view <N>`，跳过不存在或已关闭的 issue；列出仍打开的 issue，待用户确认后再执行：
-
-```bash
-gh issue close <N> --comment "已在 <commit-sha> 中完成"
-```
-
-`<commit-sha>` 来自 `git rev-parse HEAD`。
+`git-commit` 不关闭 Issue，也不修改 GitHub Project。提交时只在 commit message 中保留准确的关联引用（如 `Fixes #123` 或 `Related to #123`，按用户意图选择）。Issue 关闭和 Project 状态迁移由 `/open-pr` 与 `/github-project` 在 PR 生命周期中处理。
